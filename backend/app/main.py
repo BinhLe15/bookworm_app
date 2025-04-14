@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from sqlmodel import Session, select
+from app.api.routers.books import router as books_router
+from app.api.routers.authors import router as authors_router
+from app.api.routers.categories import router as categories_router
+from app.api.routers.cart import router as cart_router
 from app.api.v1.auth import router as auth_router
 from app.core.security import get_password_hash
 from app.db.database import create_db_and_tables, engine
 from app.models.user import User
 from app.core.config import settings
 from contextlib import asynccontextmanager
-
-
-
 
 
 # On startup event
@@ -34,3 +35,7 @@ async def lifespan(app: FastAPI):
     
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION, lifespan=lifespan)
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(books_router, prefix="/api/routers/books", tags=["books"])
+app.include_router(authors_router, prefix="/api/routers/authors", tags=["authors"])
+app.include_router(categories_router, prefix="/api/routers/categories", tags=["categories"])
+app.include_router(cart_router, prefix="/api/routers/cart", tags=["cart"])
