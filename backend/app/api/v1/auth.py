@@ -11,9 +11,7 @@ from app.db.database import get_session
 
 router = APIRouter()
 
-
-
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_session)   
@@ -31,5 +29,14 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "email": user.email,
+            "username": user.username,
+            "disabled": user.disabled,
+            "id": user.id,
+        }
+    }
     
