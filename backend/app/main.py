@@ -5,6 +5,10 @@ from app.api.routers.books import router as books_router
 from app.api.routers.authors import router as authors_router
 from app.api.routers.categories import router as categories_router
 from app.api.routers.cart import router as cart_router
+from app.api.routers.books import router as books_router
+from app.api.routers.authors import router as authors_router
+from app.api.routers.categories import router as categories_router
+from app.api.routers.cart import router as cart_router
 from app.api.v1.auth import router as auth_router
 from app.api.routers.discounts import router as discounts_router
 from app.core.security import get_password_hash
