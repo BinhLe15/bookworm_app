@@ -21,7 +21,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, discounts }) => {
     <div className="border rounded-lg p-4 shadow-md hover:shadow-lg transition">
       <Link to={`/product/${book.id}`}>
         <img   
-          src={defaultImage}
+          src={book.book_cover_photo || defaultImage}
           alt={book.book_title}
           className="w-full h-68 object-cover rounded"
         />
