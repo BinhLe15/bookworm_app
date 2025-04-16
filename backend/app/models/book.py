@@ -10,6 +10,6 @@ class Book(SQLModel, table=True):
     book_title: str = Field(max_length=255)
     book_summary: Optional[str] = Field(default=None)
     book_price: float = Field()
-    book_cover_photo: Optional[str] = Field(default=None, max_length=20)
+    book_cover_photo: Optional[str] = Field(default=None, max_length=100)
 
 
