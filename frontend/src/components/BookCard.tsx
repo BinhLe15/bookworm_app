@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Discount } from '../types';
-import defaultImage from '../assets/default.png'
 
 interface BookCardProps {
   book: Book;
@@ -21,16 +20,15 @@ const BookCard: React.FC<BookCardProps> = ({ book, discounts }) => {
     <div className="border rounded-lg p-4 shadow-md hover:shadow-lg transition">
       <Link to={`/product/${book.id}`}>
         <img   
-          src={defaultImage}
+          src={"https://picsum.photos/640/480?random=" + book.id}
           alt={book.book_title}
           className="w-full h-68 object-cover rounded"
         />
         <h3 className="text-lg font-semibold mt-2">{book.book_title}</h3>
-        <p className='text-gray-600'>${price.toFixed(2)}</p>
-        {/* <p className="text-gray-600">${price.toFixed(2)}</p> */}
         {activeDiscount && (
           <p className="text-red-500 line-through">${book.book_price.toFixed(2)}</p>
         )}
+        <p className='text-gray-600'>${price.toFixed(2)}</p>
       </Link>
     </div>
   );

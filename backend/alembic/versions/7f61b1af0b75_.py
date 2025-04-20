@@ -1,20 +1,21 @@
-"""Add new tables from author, book, category,... for book store
+"""empty message
 
-Revision ID: f498e2ddc61d
-Revises: 9cfbb373c8cd
-Create Date: 2025-04-14 14:02:02.143985
+Revision ID: 7f61b1af0b75
+Revises: 
+Create Date: 2025-04-17 10:19:12.542048
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
+
+import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f498e2ddc61d'
-down_revision: Union[str, None] = '9cfbb373c8cd'
+revision: str = '7f61b1af0b75'
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -38,7 +39,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('disabled', sa.Boolean(), nullable=False),
+    sa.Column('admin', sa.Boolean(), nullable=False),
     sa.Column('hashed_password', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -47,11 +48,11 @@ def upgrade() -> None:
     op.create_table('book',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=True),
-    sa.Column('author_id', sa.Integer(), nullable=True),
+    sa.Column('author_id', sa.Integer(), nullable=False),
     sa.Column('book_title', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('book_summary', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('book_price', sa.Float(), nullable=False),
-    sa.Column('book_cover_photo', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=True),
+    sa.Column('book_cover_photo', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
     sa.ForeignKeyConstraint(['author_id'], ['author.id'], ),
     sa.ForeignKeyConstraint(['category_id'], ['category.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -63,20 +64,6 @@ def upgrade() -> None:
     sa.Column('order_amount', sa.Float(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('bookauthor',
-    sa.Column('book_id', sa.Integer(), nullable=False),
-    sa.Column('author_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['author_id'], ['author.id'], ),
-    sa.ForeignKeyConstraint(['book_id'], ['book.id'], ),
-    sa.PrimaryKeyConstraint('book_id', 'author_id')
-    )
-    op.create_table('bookcategory',
-    sa.Column('book_id', sa.Integer(), nullable=False),
-    sa.Column('category_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['book_id'], ['book.id'], ),
-    sa.ForeignKeyConstraint(['category_id'], ['category.id'], ),
-    sa.PrimaryKeyConstraint('book_id', 'category_id')
     )
     op.create_table('discount',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -99,11 +86,11 @@ def upgrade() -> None:
     )
     op.create_table('review',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('book_id', sa.Integer(), nullable=True),
+    sa.Column('book_id', sa.Integer(), nullable=False),
     sa.Column('review_title', sqlmodel.sql.sqltypes.AutoString(length=120), nullable=False),
     sa.Column('review_details', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('review_date', sa.DateTime(), nullable=False),
-    sa.Column('rating_start', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
+    sa.Column('rating_start', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['book_id'], ['book.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -116,8 +103,6 @@ def downgrade() -> None:
     op.drop_table('review')
     op.drop_table('orderitem')
     op.drop_table('discount')
-    op.drop_table('bookcategory')
-    op.drop_table('bookauthor')
     op.drop_table('order')
     op.drop_table('book')
     op.drop_index(op.f('ix_user_username'), table_name='user')

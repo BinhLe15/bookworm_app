@@ -64,3 +64,9 @@ export interface Category {
     book_id: number;
     quantity: number;
   }
+
+  export interface FeaturedBooks {
+    book_id: number;
+    avg_rating: number;
+    total_reviews: number;
+  }

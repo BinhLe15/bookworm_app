@@ -30,8 +30,12 @@ api.interceptors.response.use(
 export const login = (email: string, password: string): Promise<AxiosResponse<{ access_token: string; user: User }>> => 
     api.post("/auth/login", { username: email, password });
 
-export const getBooks = (params: unknown): Promise<AxiosResponse<Book[]>> =>
-    api.get("/api/routers/books/", { params });
+export const getOnSaleBooks = (params: unknown): Promise<AxiosResponse<Book[]>> =>
+    api.get("/api/routers/books/onsale_books", { params });
+
+export const getFeaturedBooks = (params: unknown): Promise<AxiosResponse<Book[]>> =>
+    api.get("/api/routers/books/featured_books", { params });
+
 
 export const getBookById = (id: number): Promise<AxiosResponse<Book>> =>
     api.get(`/books/${id}`);

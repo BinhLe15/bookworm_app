@@ -3,7 +3,7 @@ from sqlmodel import Session, func, select
 from typing import List, Optional
 from datetime import date
 from ...db.database import get_session
-from ...models.book import Book, BookCategory
+from ...models.book import Book
 from ...models.author import Author
 from ...models.category import Category
 from ...models.discount import Discount
