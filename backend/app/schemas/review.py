@@ -4,17 +4,24 @@ from sqlmodel import SQLModel, Field
 from pydantic import BaseModel
 
 
-class Review(SQLModel):
+class ReviewBase(SQLModel):
     """Schema for review."""
-    book_id: Optional[int] = Field(foreign_key="book.id")
-    review_title: str
-    review_details: Optional[str] = None
+    review_title: Optional[str] = Field(..., description="Title of the review")
+    review_details: str = Field(..., description="Details of the review")
     review_date: datetime = datetime.now()
-    rating_star: int
-
-class ReviewCreate(Review):
+    rating_star: int = Field(..., description="Star rating from 1 to 5")
+class ReviewCreate(ReviewBase):
     """Schema for creating a review."""
     pass
+
+class ReviewUpdate(ReviewBase):
+    """Schema for updating a review."""
+    pass
+
+class ReviewRead(ReviewBase):
+    """Schema for reading a review."""
+    id: int
+    book_id: int
 
 
 class RecommendationRead(SQLModel):

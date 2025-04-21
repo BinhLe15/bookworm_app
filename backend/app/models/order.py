@@ -1,20 +1,19 @@
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
+from decimal import Decimal
+from sqlmodel import Numeric, SQLModel, Field
+from typing import Optional
+from sqlalchemy import BigInteger, SmallInteger, Column
 from datetime import datetime
 
 
 class Order(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(sa_type=BigInteger, default=None, primary_key=True)
     user_id: Optional[int] = Field(foreign_key="user.id")
-    order_date: datetime = Field(default_factory=datetime.now())
-    order_amount: float = Field()
-    items: List["OrderItem"] = Relationship(back_populates="order")
+    order_date: datetime = Field(default_factory=datetime.now)
+    order_amount: Decimal = Field(sa_type=Numeric(8, 2))
 
 class OrderItem(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    order_id: Optional[int] = Field(foreign_key="order.id")
-    book_id: Optional[int] = Field(foreign_key="book.id")
-    quantity: int
-    price: float
-    
-    order: "Order" = Relationship(back_populates="items")
+    id: Optional[int] = Field(sa_type=BigInteger, default=None, primary_key=True)
+    order_id: Optional[int] = Field(sa_type=BigInteger, foreign_key="order.id")
+    book_id: Optional[int] = Field(sa_type=BigInteger, foreign_key="book.id")
+    quantity: int = Field(sa_type=SmallInteger)
+    price: Decimal = Field(sa_type=Numeric(5, 2))

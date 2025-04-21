@@ -1,11 +1,13 @@
 from typing import Optional
 from sqlmodel import Field, SQLModel
+from sqlalchemy import Column, BigInteger
 
 class User(SQLModel, table=True):
     """User model for the application."""
     
-    id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(index=True, unique=True)
-    email: str = Field(index=True, unique=True, default=None)
+    id: Optional[int] = Field(sa_type=BigInteger, default=None, primary_key=True)
+    first_name: str = Field(max_length=50)
+    last_name: str = Field(max_length=50)
+    email: str = Field(unique=True, default=None, )
     admin: bool = Field(default=False)
-    hashed_password: str
+    password: str = Field(max_length=255)
