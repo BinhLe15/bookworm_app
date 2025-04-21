@@ -26,22 +26,11 @@ async def get_user(email: str, session: Session) -> Optional[User]:
 async def authenticate_user(email: str, password: str, session: Session = Depends(get_session)) -> Optional[User]:
     """Authenticate a user by username and password."""
     user = await get_user(email, session)
-    # if not user:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Invalid credentials",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-    if not verify_password(password, user.hashed_password):
+    
+    if not verify_password(password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    if user.disabled:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Inactive user",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user

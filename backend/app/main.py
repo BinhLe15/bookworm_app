@@ -7,6 +7,8 @@ from app.api.routers.categories import router as categories_router
 from app.api.routers.cart import router as cart_router
 from app.api.v1.auth import router as auth_router
 from app.api.routers.discounts import router as discounts_router
+from app.api.routers.reviews import router as reviews_router
+from app.api.routers.orders import router as orders_router
 from app.core.security import get_password_hash
 from app.db.database import create_db_and_tables, engine
 from app.models.user import User
@@ -22,17 +24,18 @@ async def lifespan(app: FastAPI):
 
     # create a superuser
     with Session(engine) as session:
-        existing_user = session.exec(select(User).where(User.username == "admin")).first()
-        if not existing_user:
-            existing_user = User(
-                username="admin",
+        existing_admin_user = session.exec(select(User).where(User.admin == True)).first()
+        if not existing_admin_user:
+            existing_admin_user = User(
+                first_name="Brian",
+                last_name="Lee",
                 email=settings.FIRST_SUPERUSER,
-                hashed_password=get_password_hash(settings.FIRST_SUPERUSER_PASSWORD),
-                disabled=False,
+                password=get_password_hash(settings.FIRST_SUPERUSER_PASSWORD),
+                admin=True,
             )
-        session.add(existing_user)
+        session.add(existing_admin_user)
         session.commit()
-        session.refresh(existing_user)
+        session.refresh(existing_admin_user)
     yield
     
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION, lifespan=lifespan)
@@ -51,3 +54,5 @@ app.include_router(authors_router, prefix="/api/routers/authors", tags=["authors
 app.include_router(categories_router, prefix="/api/routers/categories", tags=["categories"])
 app.include_router(cart_router, prefix="/api/routers/cart", tags=["cart"])
 app.include_router(discounts_router, prefix="/api/routers/discounts", tags=["discounts"])
+app.include_router(reviews_router, prefix="/api/routers/reviews", tags=["reviews"])
+app.include_router(orders_router, prefix="/api/routers/orders", tags=["orders"])

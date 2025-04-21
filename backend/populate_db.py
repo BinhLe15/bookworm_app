@@ -33,7 +33,7 @@ async def populate_db():
         # session.commit()
         # print(f"Created {len(users)} users")
 
-        # Create categories
+        # # Create categories
         # categories = []
         # for _ in range(15):
         #     category = Category(
@@ -45,7 +45,7 @@ async def populate_db():
         # session.commit()
         # print(f"Created {len(categories)} categories")
 
-        # Create Authors
+        # # Create Authors
         # authors = []
         # for _ in range(50):
         #     author = Author(
@@ -57,7 +57,7 @@ async def populate_db():
         # session.commit()
         # print(f"Created {len(authors)} authors")
 
-        # Create Books
+        # # Create Books
         # books = []
         # for _ in range(200):
         #     book = Book(
@@ -73,17 +73,17 @@ async def populate_db():
         # session.commit()
         # print(f"Created {len(books)} books: ")
 
-        # Create Discounts
-        for _ in range(20):
-            discount = Discount(
-                book_id=fake.unique.random_int(min=1, max=200),
-                discount_price=round(random.uniform(5.0, 90.0), 2),
-                discount_start_date=fake.past_datetime(start_date=datetime.now(), tzinfo=None),
-                discount_end_date=fake.future_datetime(),
-            )
-            session.add(discount)
-        session.commit()
-        print(f"Created {20} discounts")
+        # # Create Discounts
+        # for _ in range(20):
+        #     discount = Discount(
+        #         book_id=fake.unique.random_int(min=1, max=200),
+        #         discount_price=round(random.uniform(5.0, 90.0), 2),
+        #         discount_start_date=fake.past_datetime(start_date=datetime.now(), tzinfo=None),
+        #         discount_end_date=fake.future_datetime(),
+        #     )
+        #     session.add(discount)
+        # session.commit()
+        # print(f"Created {20} discounts")
 
         # Create Reviews
         reviews = []
@@ -93,7 +93,7 @@ async def populate_db():
                 review_title=fake.sentence(nb_words=3),
                 review_details=fake.paragraph(nb_sentences=2),
                 review_date=fake.date_time_this_decade(),
-                rating_start=random.randint(1, 5)
+                rating_star=random.randint(1, 5)
             )
             reviews.append(review)
             session.add(review)
