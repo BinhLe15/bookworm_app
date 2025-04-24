@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getOnSaleBooks, getFeaturedBooks, getDiscounts } from '../services/api';
+import { getDiscounts, getBooks } from '../services/api';
 import BookCard from '../components/BookCard';
 import { Book, Discount } from '../types';
 import {
@@ -10,33 +10,42 @@ import {
   CarouselPrevious,
 } from "../components/ui/carousel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Button } from '../components/ui/button';
+import { Link } from 'react-router-dom';
 
+
+const skip = 0;
+const limit = 8;
 
 const Home: React.FC = () => {
-  const [onSaleBooks, setOnSaleBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
 
   const [sortBy, setSortBy] = useState<'recommended' | 'popular'>('recommended');
 
   useEffect(() => {
+    
+  }, []);
 
+  useEffect(() => {
     const fetchOnSaleBooks = async () => {
       try {
-        const response = await getOnSaleBooks({ skip: 0, limit: 8 });
-        setOnSaleBooks(response.data);
+        const response = await getBooks({ skip: 0, limit: 10, sort_by: 'onsale' });
+        setBooks(response.data.items);
       } catch (error) {
         console.error('Error fetching on-sale books:', error);
       }
     };
 
+    fetchOnSaleBooks();
+    
     const fetchFeaturedBooks = async () => {
       try {
-        const response = await getFeaturedBooks({ skip: 0, limit: 8, sort_by: sortBy });
-        setFeaturedBooks(response.data);
+        const response = await getBooks({ skip: skip, limit: limit, sort_by: sortBy });
+        setFeaturedBooks(response.data.items);
       } catch (error) {
-        console.error('Error fetching featured books:', error);
+        console.error('Error fetching on-sale books:', error);
       }
     };
 
@@ -48,7 +57,6 @@ const Home: React.FC = () => {
         console.error('Error fetching discounts:', error);
       }
     };
-    fetchOnSaleBooks();
     fetchFeaturedBooks();
     fetchDiscounts();
   }, [sortBy]);
@@ -58,30 +66,18 @@ const Home: React.FC = () => {
       <div className='p-7'>
         <div className='flex justify-between'>
           <h2 className="text-2xl font-bold mb-4">On Sale</h2>
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select a fruit" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Fruits</SelectLabel>
-                <SelectItem value="apple">Apple</SelectItem>
-                <SelectItem value="banana">Banana</SelectItem>
-                <SelectItem value="blueberry">Blueberry</SelectItem>
-                <SelectItem value="grapes">Grapes</SelectItem>
-                <SelectItem value="pineapple">Pineapple</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <Button className='bg-gray-800'>
+            <Link to="/shop" className="text-white">View All</Link>
+          </Button>
         </div>
         
         <div className='p-15 border-2 border-gray-500'>
           <Carousel className="w-full max-w-screen">
             <CarouselContent className="-ml-1">
-              {onSaleBooks.map((book) => (
+              {books.map((book) => (
                 <CarouselItem key={book.id} className="pl-1 md:basis-1/2 lg:basis-1/4">
                   <div className="p-1">
-                    <BookCard key={book.id} book={book} discounts={discounts} />
+                    <BookCard key={book.id} book={book} discounts={discounts} author_id={book.author_id} />
                   </div>
                 </CarouselItem>
               ))}
@@ -104,14 +100,14 @@ const Home: React.FC = () => {
             <TabsContent value="recommended">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 border-2 border-gray-500 p-4">
                 {featuredBooks.map((book) => (
-                <BookCard key={book.id} book={book} discounts={discounts} />
+                <BookCard key={book.id} book={book} discounts={discounts} author_id={book.author_id}/>
                 ))}
               </div>
             </TabsContent>
             <TabsContent value="popular">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 border-2 border-gray-500 p-4">
                 {featuredBooks.map((book) => (
-                <BookCard key={book.id} book={book} discounts={discounts} />
+                <BookCard key={book.id} book={book} discounts={discounts}  author_id={book.author_id}/>
                 ))}
               </div>
             </TabsContent>
