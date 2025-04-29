@@ -1,16 +1,32 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { ControllerRenderProps, useForm } from "react-hook-form";
 import {
   getBookById,
   getAuthorById,
   getDiscountByBookId,
   getReviewsByBookId,
   getRatingsByBookId,
+  addReview,
 } from "../services/api";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../components/ui/form";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Textarea } from "../components/ui/textarea";
 import QuantityInput from "../components/QuantityInput";
 import PaginationCustom from "../components/Pagination";
 import { Author, Book, Discount, Rating, Review } from "../types";
 import { toast } from "sonner";
+import { formatNumber } from "../components/FormatNumber";
+import { useCart } from "../context/CartContext";
+import defaultImage from "../assets/default.png";
 
 interface Filters {
   rating: number | null;
@@ -26,14 +42,130 @@ const Product: React.FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [book, setBook] = useState<Book>();
   const [author, setAuthors] = useState<Author>();
+  const [avgRating, setAvgRating] = useState<number>(0);
   const [discount, setDiscounts] = useState<Discount>();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [filters, setFilters] = useState<Filters>({
-    rating: 5,
+    rating: null,
   });
+  const [refreshReviews, setRefreshReviews] = useState<number>(0);
 
   const params = useParams();
+  const { addToCart } = useCart();
+
+  interface FormData {
+    title: string;
+    detail: string;
+    rating: number;
+  }
+
+  const form = useForm<FormData>({
+    defaultValues: {
+      title: "",
+      detail: "",
+      rating: 1,
+    },
+  });
+  const onFormSubmit = (data: FormData) => {
+    try {
+      addReview(Number(params.id), {
+        review_title: data.title,
+        review_details: data.detail,
+        rating_star: data.rating,
+      });
+      form.reset();
+      // Increment the counter to trigger a refresh of the reviews
+      setRefreshReviews((prev) => prev + 1);
+      toast.success("Review submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast.error("Failed to submit review.");
+    }
+  };
+
+  // const addToCart = () => {
+  //   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  //   const MAX_QUANTITY = 8;
+
+  //   const existingItemIndex = cart.findIndex(
+  //     (item: {
+  //       bookId: number | undefined;
+  //       quantity: number;
+  //       price: number | undefined;
+  //       bookTitle: string | undefined;
+  //     }) => item.bookId == Number(params.id)
+  //   );
+
+  //   if (existingItemIndex >= 0) {
+  //     // Book already in cart, update quantity but cap at 8
+  //     const currentQuantity = cart[existingItemIndex].quantity;
+  //     const newQuantity = currentQuantity + quantity;
+  //     if (newQuantity > MAX_QUANTITY) {
+  //       return {
+  //         success: false,
+  //         message: `Cannot add more. Max quantity of ${MAX_QUANTITY} reached for "${book?.book_title}".`,
+  //       };
+  //     }
+  //     cart[existingItemIndex].quantity = newQuantity;
+  //   } else {
+  //     if (quantity > MAX_QUANTITY) {
+  //       return {
+  //         success: false,
+  //         message: `Cannot add ${quantity} items. Max quantity is ${MAX_QUANTITY} for "${book?.book_title}".`,
+  //       };
+  //     }
+  //     cart.push({
+  //       bookId: params.id,
+  //       quantity: quantity,
+  //       price: book?.book_price,
+  //       bookTitle: book?.book_title,
+  //     });
+  //   }
+
+  //   localStorage.setItem("cart", JSON.stringify(cart));
+  //   window.addEventListener("cart-changed", () => {
+  //     // Handle the event here
+  //     console.log("Cart changed!");
+  //   });
+  //   return { success: true, message: `"${book?.book_title}" added to cart!` };
+  // };
+
+  const handleAddToCart = () => {
+    const result = addToCart(
+      Number(params.id),
+      quantity,
+      book?.book_title,
+      price
+    );
+    if (result.success) {
+      toast.success(result.message, {
+        duration: 2000, // Auto-dismiss after 2 seconds
+      });
+    } else {
+      toast.error(result.message, {
+        duration: 3000, // Auto-dismiss after 3 seconds
+      });
+    }
+  };
+
+  const fetchRatings = async () => {
+    const response = await getRatingsByBookId(Number(params.id));
+    setRatings(response.data);
+    let avgEachRating = 0;
+    let totalReviews = 0;
+
+    {
+      // get each rating star and review count in api to calculate avg rating
+      response.data.map((rating) => {
+        totalReviews += rating.review_count;
+        avgEachRating =
+          rating.rating_star * rating.review_count + avgEachRating;
+      });
+      const average = totalReviews > 0 ? avgEachRating / totalReviews : 0;
+      setAvgRating(average);
+    }
+  };
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -49,6 +181,23 @@ const Product: React.FC = () => {
 
   useEffect(() => {
     if (book) {
+      const fetchReviews = async () => {
+        const reviewParams = {
+          rating: filters.rating,
+          sort_by: sortBy,
+          skip: (currentPage - 1) * itemsPerPage,
+          limit: itemsPerPage,
+        };
+        try {
+          const response = await getReviewsByBookId(
+            Number(params.id),
+            reviewParams
+          );
+          setTotalItems(response.data.total);
+        } catch (error) {
+          console.error("Error fetching reviews:", error);
+        }
+      };
       const fetchAuthor = async () => {
         try {
           if (book.author_id !== undefined) {
@@ -63,49 +212,34 @@ const Product: React.FC = () => {
 
       const fetchDiscount = async () => {
         try {
-          const response = await getDiscountByBookId(book.id);
+          const response = await getDiscountByBookId(Number(params.id));
           setDiscounts(response.data);
         } catch (error) {
           console.error("Error fetching discounts:", error);
         }
       };
+
+      fetchReviews();
       fetchDiscount();
 
-      const fetchReviews = async () => {
-        const params = {
-          rating: filters.rating,
-          sort_by: sortBy,
-          skip: (currentPage - 1) * itemsPerPage,
-          limit: itemsPerPage,
-        };
-        try {
-          const response = await getReviewsByBookId(book.id, params);
-          setTotalItems(response.data.total);
-        } catch (error) {
-          console.error("Error fetching reviews:", error);
-        }
-      };
-      fetchReviews();
-
-      const fetchRatings = async () => {
-        const response = await getRatingsByBookId(book.id);
-        setRatings(response.data);
-      };
       fetchRatings();
     }
-  }, [book]);
+  }, [book, refreshReviews]);
 
   useEffect(() => {
     if (book) {
       const fetchReviews = async () => {
-        const params = {
+        const reviewParams = {
           rating: filters.rating,
           sort_by: sortBy,
           skip: (currentPage - 1) * itemsPerPage,
           limit: itemsPerPage,
         };
         try {
-          const response = await getReviewsByBookId(book.id, params);
+          const response = await getReviewsByBookId(
+            Number(params.id),
+            reviewParams
+          );
           setReviews(response.data.items);
           setStartItem((currentPage - 1) * itemsPerPage + 1);
           setEndItem(Math.min(currentPage * itemsPerPage, totalItems));
@@ -116,69 +250,23 @@ const Product: React.FC = () => {
 
       fetchReviews();
     }
-  }, [book, filters, itemsPerPage, currentPage, totalItems, sortBy]);
+  }, [
+    book,
+    filters,
+    itemsPerPage,
+    currentPage,
+    totalItems,
+    sortBy,
+    refreshReviews,
+  ]);
 
   // set price to discount price if available
   const price = discount ? discount.discount_price : book?.book_price;
   // count the number of reviews by star rating
-  const getReviewCount = (star: number) => {
+  const getReviewCount = (star: number | null) => {
+    if (star === null) return totalItems;
     const found = ratings.find((r) => r.rating_star === star);
     return found ? found.review_count : 0;
-  };
-
-  const addToCart = () => {
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const MAX_QUANTITY = 8;
-
-    const existingItemIndex = cart.findIndex(
-      (item: {
-        bookId: number | undefined;
-        quantity: number;
-        price: number | undefined;
-      }) => item.bookId === book?.id
-    );
-
-    if (existingItemIndex >= 0) {
-      // Book already in cart, update quantity but cap at 8
-      const currentQuantity = cart[existingItemIndex].quantity;
-      const newQuantity = currentQuantity + quantity;
-      if (newQuantity > MAX_QUANTITY) {
-        return {
-          success: false,
-          message: `Cannot add more. Max quantity of ${MAX_QUANTITY} reached for "${book?.book_title}".`,
-        };
-      }
-      cart[existingItemIndex].quantity = newQuantity;
-    } else {
-      if (quantity > MAX_QUANTITY) {
-        return {
-          success: false,
-          message: `Cannot add ${quantity} items. Max quantity is ${MAX_QUANTITY} for "${book?.book_title}".`,
-        };
-      }
-      cart.push({
-        bookId: book?.id,
-        quantity: quantity,
-        price: book?.book_price,
-        bookTitle: book?.book_title,
-      });
-    }
-
-    localStorage.setItem("cart", JSON.stringify(cart));
-    return { success: true, message: `"${book?.book_title}" added to cart!` };
-  };
-
-  const handleAddToCart = () => {
-    const result = addToCart();
-    if (result.success) {
-      toast.success(result.message, {
-        duration: 2000, // Auto-dismiss after 2 seconds
-      });
-    } else {
-      toast.error(result.message, {
-        duration: 3000, // Auto-dismiss after 3 seconds
-      });
-    }
   };
 
   return (
@@ -194,12 +282,14 @@ const Product: React.FC = () => {
               {/* TODO: Fix the image onError to handle if the image is not found set image dedfault */}
               <img
                 // src={"https://picsum.photos/640/480?random=1"}
-                src={
-                  book?.book_cover_photo ||
-                  "https://picsum.photos/640/480?random=1"
-                }
+                src={book?.book_cover_photo}
                 alt={book?.book_title}
                 className="w-full h-68 object-cover rounded"
+                onError={({ currentTarget }) => {
+                  // handle image link error
+                  currentTarget.onerror = null; // prevents looping
+                  currentTarget.src = defaultImage;
+                }}
               />
               <div className="py-4">
                 <span>By (author) </span>
@@ -245,7 +335,7 @@ const Product: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="col-span-6 row-start-2 flex flex-col border border-gray-300 rounded-lg shadow-md p-8">
+        <div className="col-span-6 row-start-2 flex flex-col border border-gray-300 rounded-lg shadow-md p-8 h-fit">
           <div className="space-x-2">
             <label className="text-2xl font-semibold mb-2">
               Customer Reviews
@@ -259,12 +349,19 @@ const Product: React.FC = () => {
           </div>
 
           <div className="space-x-4">
-            <span className="text-3xl font-bold">4.5</span>
+            <span className="text-3xl font-bold">
+              {formatNumber(avgRating)}
+            </span>
             <span className="text-3xl font-bold">Star</span>
           </div>
-          <div className="flex flex-row items-center space-x-4 ">
+          <div className="flex flex-row items-center space-x-2 ">
             {/* TODO: Total numbers will be total records or total items*/}
-            <span className="font-semibold underline">({totalItems})</span>
+            <span
+              className="font-semibold underline cursor-pointer pr-2"
+              onClick={() => setFilters({ ...filters, rating: null })}
+            >
+              ({totalItems})
+            </span>
             {[5, 4, 3, 2, 1].map((star, index) => (
               <span key={star}>
                 <span
@@ -280,7 +377,7 @@ const Product: React.FC = () => {
           <div className="flex justify-between items-center">
             <label className="my-4">
               Showing {startItem}-{endItem} of{" "}
-              {getReviewCount(filters?.rating ?? 5)} reviews
+              {getReviewCount(filters?.rating || null)} reviews
             </label>
             <div>
               <select
@@ -347,7 +444,83 @@ const Product: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-row h-fit col-span-3 col-start-7 row-start-2 border border-gray-300 rounded-lg shadow-md">
-          4
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onFormSubmit)}
+              className="space-y-8 p-8 w-full"
+            >
+              <FormField
+                control={form.control}
+                name="title"
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<FormData, "title">;
+                }) => (
+                  <FormItem>
+                    <FormLabel>Add a title</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="border border-gray-300 shadow-md"
+                        type="text"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="detail"
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<FormData, "detail">;
+                }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Details please! Your review helps other shoppers
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        className="border border-gray-300 shadow-md"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="rating"
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<FormData, "rating">;
+                }) => (
+                  <FormItem>
+                    <FormLabel>Select a rating star</FormLabel>
+                    <FormControl>
+                      <select
+                        className="h-10 border border-gray-300 shadow-md"
+                        {...field}
+                      >
+                        <option value={1}>1 Star</option>
+                        <option value={2}>2 Stars</option>
+                        <option value={3}>3 Stars</option>
+                        <option value={4}>4 Stars</option>
+                        <option value={5}>5 Stars</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Submit</Button>
+            </form>
+          </Form>
         </div>
       </div>
     </div>
