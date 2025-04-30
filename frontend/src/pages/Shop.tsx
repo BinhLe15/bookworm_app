@@ -24,7 +24,7 @@ interface Filters {
   min_rating: number | null;
 }
 
-const Shop: React.FC = () => {
+const Shop = () => {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -93,6 +93,10 @@ const Shop: React.FC = () => {
     fetchBooks();
   }, [currentPage, filters, sort, itemsPerPage]);
 
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [filters]);
+
   return (
     <div className="container mx-auto p-12">
       <h2 className="text-2xl font-medium my-4">
@@ -102,88 +106,90 @@ const Shop: React.FC = () => {
             .filter(Boolean)
             .join(", ")})`}
       </h2>
-      <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2"></div>
+      <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
       <div className="flex">
         <div className="w-1/4 pr-4">
-          <h3 className="text-lg font-semibold mb-2">Filters</h3>
-          <Accordion
-            type="multiple"
-            className="w-full"
-            defaultValue={["category", "author", "rating"]}
-          >
-            <AccordionItem value="category">
-              <AccordionTrigger className="!no-underline">
-                Category
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {categories.map((category) => (
-                    <button
-                      className="display-block w-full text-left p-1 !font-light !text-sm hover:bg-gray-200"
-                      value={category.category_name}
-                      onClick={() =>
-                        setFilters({
-                          ...filters,
-                          category: category.category_name,
-                          category_id: category.id,
-                        })
-                      }
-                    >
-                      {category.category_name}
-                    </button>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="author">
-              <AccordionTrigger className="!no-underline">
-                Author
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {authors.map((author) => (
-                    <button
-                      className="display-block w-full text-left p-1 !font-light !text-sm hover:bg-gray-200"
-                      value={author.author_name}
-                      onClick={() =>
-                        setFilters({
-                          ...filters,
-                          author: author.author_name,
-                          author_id: author.id,
-                        })
-                      }
-                    >
-                      {author.author_name}
-                    </button>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="rating">
-              <AccordionTrigger className="!no-underline">
-                Minimum Rating
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <button
-                      className="display-block w-full text-left p-1 !font-light !text-sm hover:bg-gray-200"
-                      value={rating}
-                      onClick={() =>
-                        setFilters({
-                          ...filters,
-                          rating: rating.toString(),
-                          min_rating: rating,
-                        })
-                      }
-                    >
-                      {rating} Star
-                    </button>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <h3 className="text-lg font-semibold mb-2">Filter by</h3>
+          <div className="border border-gray-300 rounded-lg shadow-sm">
+            <Accordion
+              type="multiple"
+              className="w-full"
+              defaultValue={["category", "author", "rating"]}
+            >
+              <AccordionItem value="category">
+                <AccordionTrigger className="!no-underline">
+                  Category
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {categories.map((category) => (
+                      <button
+                        className="display-block w-full text-left p-1 !font-light !text-sm hover:bg-gray-200"
+                        value={category.category_name}
+                        onClick={() =>
+                          setFilters({
+                            ...filters,
+                            category: category.category_name,
+                            category_id: category.id,
+                          })
+                        }
+                      >
+                        {category.category_name}
+                      </button>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="author">
+                <AccordionTrigger className="!no-underline">
+                  Author
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {authors.map((author) => (
+                      <button
+                        className="display-block w-full text-left p-1 !font-light !text-sm hover:bg-gray-200"
+                        value={author.author_name}
+                        onClick={() =>
+                          setFilters({
+                            ...filters,
+                            author: author.author_name,
+                            author_id: author.id,
+                          })
+                        }
+                      >
+                        {author.author_name}
+                      </button>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="rating">
+                <AccordionTrigger className="!no-underline">
+                  Minimum Rating
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {[1, 2, 3, 4, 5].map((rating) => (
+                      <button
+                        className="display-block w-full text-left p-1 !font-light !text-sm hover:bg-gray-200"
+                        value={rating}
+                        onClick={() =>
+                          setFilters({
+                            ...filters,
+                            rating: rating.toString(),
+                            min_rating: rating,
+                          })
+                        }
+                      >
+                        {rating} Star
+                      </button>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
         </div>
 
         <div className="w-3/4">
@@ -230,6 +236,7 @@ const Shop: React.FC = () => {
             ))}
           </div>
           <div className="mt-4">
+            {/* TODO: Set current page is first page when filters change */}
             <PaginationCustom
               itemsPerPage={itemsPerPage}
               totalItems={totalItems}
