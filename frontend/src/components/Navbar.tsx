@@ -1,10 +1,18 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { SignInPopUp } from "../pages/SignIn";
+import { useCart } from "../context/CartContext";
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   // const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const { getCartItemCount } = useCart();
+
+  useEffect(() => {
+    const count = getCartItemCount();
+    setCartCount(count);
+  }, [getCartItemCount]);
 
   const { user, logout } = useAuth();
   return (
@@ -17,7 +25,7 @@ const Navbar: React.FC = () => {
           <Link to="/">Home</Link>
           <Link to="/shop">Shop</Link>
           <Link to="/about">About</Link>
-          <Link to="/cart">Cart(0)</Link>
+          <Link to="/cart">Cart({cartCount})</Link>
           {user ? (
             <>
               <span>{`${user.first_name} ${user.last_name}`}</span>
