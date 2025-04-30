@@ -43,7 +43,7 @@ button {
   cursor: pointer;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--color-gray-400);
 }
 button:focus,
 button:focus-visible {
