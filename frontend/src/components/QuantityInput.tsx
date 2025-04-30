@@ -1,5 +1,6 @@
 import React from "react";
 import { MinusIcon, PlusIcon } from "lucide-react";
+import { Button } from "./ui/button";
 
 interface QuantityInputProps {
   value: number;
@@ -7,6 +8,7 @@ interface QuantityInputProps {
   min?: number;
   max?: number;
   className?: string;
+  inputClassName?: string;
 }
 
 const QuantityInput: React.FC<QuantityInputProps> = ({
@@ -15,6 +17,7 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
   min = 1,
   max = 8,
   className = "",
+  inputClassName = "",
 }) => {
   const handleIncrement = () => {
     if (value < max) {
@@ -37,38 +40,35 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
 
   return (
     <div className={`w-full ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Quantity
-      </label>
-      <div className="flex items-center h-12 bg-gray-300 rounded">
-        <button
+      <div className="flex items-center justify-between border rounded-lg bg-gray-300 border-gray-300 shadow-sm">
+        <Button
           type="button"
           onClick={handleDecrement}
           disabled={value <= min}
-          className="flex items-center justify-center w-fit h-full text-gray-600 hover:text-gray-800 disabled:opacity-50"
+          className="flex items-center justify-center h-full bg-gray-300 text-gray-600 !rounded-r-none hover:text-gray-800 hover:bg-gray-400 disabled:opacity-50"
           aria-label="Decrease quantity"
         >
           <MinusIcon />
-        </button>
+        </Button>
 
         <input
           type="text"
           value={value}
           readOnly
           onChange={handleInputChange}
-          className="w-full h-full text-center bg-gray-300 border-none focus:outline-none focus:ring-0 cursor-default"
+          className={`${inputClassName} h-full text-center bg-gray-300 border-none focus:outline-none focus:ring-0 cursor-default`}
           aria-label="Quantity"
         />
 
-        <button
+        <Button
           type="button"
           onClick={handleIncrement}
           disabled={value >= max}
-          className="flex items-center justify-center w-fit h-full text-gray-600 hover:text-gray-800 disabled:opacity-50"
+          className="flex items-center justify-center h-full bg-gray-300 text-gray-600 !rounded-l-none hover:text-gray-800 hover:bg-gray-400 disabled:opacity-50"
           aria-label="Increase quantity"
         >
           <PlusIcon />
-        </button>
+        </Button>
       </div>
     </div>
   );
