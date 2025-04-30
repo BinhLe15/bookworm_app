@@ -84,59 +84,14 @@ const Product: React.FC = () => {
     }
   };
 
-  // const addToCart = () => {
-  //   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  //   const MAX_QUANTITY = 8;
-
-  //   const existingItemIndex = cart.findIndex(
-  //     (item: {
-  //       bookId: number | undefined;
-  //       quantity: number;
-  //       price: number | undefined;
-  //       bookTitle: string | undefined;
-  //     }) => item.bookId == Number(params.id)
-  //   );
-
-  //   if (existingItemIndex >= 0) {
-  //     // Book already in cart, update quantity but cap at 8
-  //     const currentQuantity = cart[existingItemIndex].quantity;
-  //     const newQuantity = currentQuantity + quantity;
-  //     if (newQuantity > MAX_QUANTITY) {
-  //       return {
-  //         success: false,
-  //         message: `Cannot add more. Max quantity of ${MAX_QUANTITY} reached for "${book?.book_title}".`,
-  //       };
-  //     }
-  //     cart[existingItemIndex].quantity = newQuantity;
-  //   } else {
-  //     if (quantity > MAX_QUANTITY) {
-  //       return {
-  //         success: false,
-  //         message: `Cannot add ${quantity} items. Max quantity is ${MAX_QUANTITY} for "${book?.book_title}".`,
-  //       };
-  //     }
-  //     cart.push({
-  //       bookId: params.id,
-  //       quantity: quantity,
-  //       price: book?.book_price,
-  //       bookTitle: book?.book_title,
-  //     });
-  //   }
-
-  //   localStorage.setItem("cart", JSON.stringify(cart));
-  //   window.addEventListener("cart-changed", () => {
-  //     // Handle the event here
-  //     console.log("Cart changed!");
-  //   });
-  //   return { success: true, message: `"${book?.book_title}" added to cart!` };
-  // };
-
   const handleAddToCart = () => {
     const result = addToCart(
       Number(params.id),
       quantity,
       book?.book_title,
-      price
+      price,
+      book?.book_cover_photo,
+      author?.author_name
     );
     if (result.success) {
       toast.success(result.message, {
@@ -181,23 +136,6 @@ const Product: React.FC = () => {
 
   useEffect(() => {
     if (book) {
-      const fetchReviews = async () => {
-        const reviewParams = {
-          rating: filters.rating,
-          sort_by: sortBy,
-          skip: (currentPage - 1) * itemsPerPage,
-          limit: itemsPerPage,
-        };
-        try {
-          const response = await getReviewsByBookId(
-            Number(params.id),
-            reviewParams
-          );
-          setTotalItems(response.data.total);
-        } catch (error) {
-          console.error("Error fetching reviews:", error);
-        }
-      };
       const fetchAuthor = async () => {
         try {
           if (book.author_id !== undefined) {
@@ -219,10 +157,32 @@ const Product: React.FC = () => {
         }
       };
 
-      fetchReviews();
       fetchDiscount();
 
       fetchRatings();
+    }
+  }, [book]);
+
+  useEffect(() => {
+    if (book) {
+      const fetchReviews = async () => {
+        const reviewParams = {
+          rating: filters.rating,
+          sort_by: sortBy,
+          skip: (currentPage - 1) * itemsPerPage,
+          limit: itemsPerPage,
+        };
+        try {
+          const response = await getReviewsByBookId(
+            Number(params.id),
+            reviewParams
+          );
+          setTotalItems(response.data.total);
+        } catch (error) {
+          console.error("Error fetching reviews:", error);
+        }
+      };
+      fetchReviews();
     }
   }, [book, refreshReviews]);
 
@@ -259,6 +219,11 @@ const Product: React.FC = () => {
     sortBy,
     refreshReviews,
   ]);
+
+  // Reset the current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   // set price to discount price if available
   const price = discount ? discount.discount_price : book?.book_price;
@@ -319,6 +284,9 @@ const Product: React.FC = () => {
 
             <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
             <div className="my-8">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Quantity
+              </label>
               <QuantityInput
                 className="mt-4"
                 value={quantity}
@@ -435,7 +403,7 @@ const Product: React.FC = () => {
             <div className="my-2">
               <PaginationCustom
                 itemsPerPage={itemsPerPage}
-                totalItems={totalItems}
+                totalItems={getReviewCount(filters?.rating || null)} // Total items will be total records or total items
                 currentPage={currentPage}
                 // Handle page change and set the current page
                 onPageChange={(page: number) => setCurrentPage(page)}
@@ -444,6 +412,7 @@ const Product: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-row h-fit col-span-3 col-start-7 row-start-2 border border-gray-300 rounded-lg shadow-md">
+          {/* TODO: Add required validation for title and detail */}
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onFormSubmit)}
