@@ -104,4 +104,14 @@ export const getRatingsByBookId = (
 ): Promise<AxiosResponse<Rating[]>> =>
   api.get(`/api/routers/reviews/ratings/${book_id}`);
 
+export const addReview = (
+  book_id: number,
+  params: {
+    review_title: string;
+    review_details: string;
+    rating_star: number;
+  }
+): Promise<AxiosResponse> =>
+  api.post(`/api/routers/reviews/${book_id}`, params);
+
 export default api;

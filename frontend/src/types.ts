@@ -68,6 +68,10 @@ export interface Rating {
 export interface CartItem {
   book_id: number;
   quantity: number;
+  price: number | undefined;
+  book_title: string | undefined;
+  book_cover_photo: string | undefined;
+  book_author: string | undefined;
 }
 
 export interface FeaturedBooks {
