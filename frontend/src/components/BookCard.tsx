@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Author, Book, Discount } from "../types";
 import { getAuthors } from "../services/api";
+import defaultImage from "../assets/default.png";
 
 interface BookCardProps {
   book: Book;
@@ -37,8 +38,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, discounts, author_id }) => {
     <div className="border rounded-lg m-4 shadow-md hover:shadow-lg transition">
       <Link to={`/product/${book.id}`}>
         <img
-          src={"https://picsum.photos/640/480?random=" + book.id}
+          src={book.book_cover_photo}
           alt={book.book_title}
+          onError={({ currentTarget }) => {
+            // handle image link error
+            currentTarget.onerror = null; // prevents looping
+            currentTarget.src = defaultImage;
+          }}
           className="w-full h-68 object-cover rounded"
         />
         <div className="p-4">
