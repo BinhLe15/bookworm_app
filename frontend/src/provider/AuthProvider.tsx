@@ -25,13 +25,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       decodedRefreshToken.exp * 1000
     ).toUTCString();
 
-    if (refreshTokenExpireTime < now) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setUser(null);
-      return;
-    }
-
     // Function to initialize authentication automatically when the app loads
     const initializeAuth = async () => {
       try {
@@ -61,6 +54,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
     };
     initializeAuth();
+
+    if (refreshTokenExpireTime < now) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
+      return;
+    }
   }, []);
 
   const loginUser = async (email: string, password: string): Promise<void> => {

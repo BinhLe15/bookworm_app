@@ -1,4 +1,4 @@
-import { useState } from "react"; // Removed unused imports
+import { Dispatch, useState } from "react"; // Removed unused imports
 import { useNavigate } from "react-router-dom"; // Removed unused imports
 import { Button } from "../components/ui/button";
 import {
@@ -21,7 +21,19 @@ import { Input } from "../components/ui/input";
 import { useAuth } from "../context/AuthContext";
 import { useForm } from "react-hook-form";
 
-export function SignInPopUp() {
+interface SignInPopUpProps {
+  isOpen?: boolean;
+  setIsOpen: Dispatch<React.SetStateAction<boolean>>;
+  className?: string;
+  navigatePlace?: string;
+}
+
+export function SignInPopUp({
+  isOpen = false,
+  setIsOpen,
+  className = "",
+  navigatePlace = "/",
+}: SignInPopUpProps) {
   const [error, setError] = useState<string | null>(null);
   const { loginUser } = useAuth();
   const navigate = useNavigate();
@@ -42,15 +54,16 @@ export function SignInPopUp() {
     setError(null); // Clear any previous errors
     try {
       await loginUser(email, password);
-      navigate("/");
+      setIsOpen(false);
+      navigate(navigatePlace);
     } catch {
       setError("Invalid email or password");
     }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild className={`${className}`}>
         <Button variant="outline">Sign In</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
