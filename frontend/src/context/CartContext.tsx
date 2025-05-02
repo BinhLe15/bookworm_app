@@ -7,9 +7,10 @@ interface CartContextType {
     id: number,
     quantity: number,
     bookTitle: string | undefined,
-    bookPrice: number | undefined,
+    bookFinalPrice: number | undefined,
     bookCoverPhoto: string | undefined,
-    bookAuthor: string | undefined
+    bookAuthor: string | undefined,
+    bookBasePrice: number | undefined
   ) => { success: boolean; message: string };
   setCartItems: (items: CartItem[]) => void;
   getCartItemCount: () => number;
