@@ -38,7 +38,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, discounts, author_id }) => {
     <div className="border rounded-lg m-4 shadow-md hover:shadow-lg transition">
       <Link to={`/product/${book.id}`}>
         <img
-          src={book.book_cover_photo}
+          src={book?.book_cover_photo || defaultImage}
           alt={book.book_title}
           onError={({ currentTarget }) => {
             // handle image link error
