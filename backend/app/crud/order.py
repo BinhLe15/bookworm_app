@@ -1,22 +1,26 @@
+from datetime import datetime
 from fastapi import HTTPException
 from sqlmodel import Session, select
 from app.models.user import User as UserModel
 from app.models.order import Order as OrderModel
+from app.models.book import Book as BookModel
+from app.models.discount import Discount as DiscountModel
 from app.schemas.order import OrderCreate, OrderUpdate
+from app.models.order import OrderItem
 
-def create_order(session: Session, order_create: OrderCreate, current_user: UserModel):
-    """Create a new order."""
-    if not current_user.id:
-        raise HTTPException(status_code=400, detail="Cannot create order without user")
+# def create_order(session: Session, order_create: OrderCreate, current_user: UserModel):
+#     """Create a new order."""
+#     if not current_user.id:
+#         raise HTTPException(status_code=400, detail="Cannot create order without user")
     
-    db_order = OrderModel(**order_create.model_dump())
+#     db_order = OrderModel(**order_create.model_dump())
 
-    db_order.user_id = current_user.id
+#     db_order.user_id = current_user.id
 
-    session.add(db_order)
-    session.commit()
-    session.refresh(db_order)
-    return db_order
+#     session.add(db_order)
+#     session.commit()
+#     session.refresh(db_order)
+#     return db_order
 
 def get_order(session: Session, order_id: int):
     """Get a order."""
@@ -57,3 +61,69 @@ def delete_order(session: Session, order_id: int):
     session.delete(db_order)
     session.commit()
     return db_order
+
+def place_order(session: Session, order_create: OrderCreate, current_user: UserModel):
+    """Place an order."""
+    # Validate user
+    if not current_user.id:
+        raise HTTPException(status_code=400, detail="Stay logged in to place an order")
+    
+    # Calculate total amount and prepare order items
+    total_amount = 0.0
+    order_create.order_date = datetime.now()
+
+    for item in order_create.items:
+        book = session.get(BookModel, item.book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail=f"Book with id {item.book_id} not found")
+        
+        discount = session.exec(
+            select(DiscountModel)
+            .where(DiscountModel.book_id == item.book_id, 
+                   DiscountModel.discount_start_date <= datetime.now(),
+                   (DiscountModel.discount_end_date == None) | 
+                   (DiscountModel.discount_end_date >= datetime.now())
+            )
+        ).first()
+
+        # Use discounted price if available, otherwise use regular price
+        price = float(discount.discount_price) if discount else float(book.book_price)
+        item_total = item.quantity * price
+        total_amount += item_total
+
+    # Create new order
+    new_order = OrderModel(
+        user_id=current_user.id,
+        order_date=order_create.order_date,
+        order_amount=total_amount
+    )
+    session.add(new_order)
+    session.flush()
+
+    for item in order_create.items:
+        book = session.get(BookModel, item.book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail=f"Book with id {item.book_id} not found")
+        
+        discount = session.exec(
+            select(DiscountModel)
+            .where(DiscountModel.book_id == item.book_id, 
+                   DiscountModel.discount_start_date <= datetime.now(),
+                   (DiscountModel.discount_end_date == None) | 
+                   (DiscountModel.discount_end_date >= datetime.now())
+            )
+        ).first()
+
+        # Use discounted price if available, otherwise use regular price
+        price = float(discount.discount_price) if discount else float(book.book_price)
+        order_item = OrderItem(
+            order_id=new_order.id,
+            book_id=item.book_id,
+            quantity=item.quantity,
+            price=price
+        )
+        session.add(order_item)
+    
+    session.commit()
+    
+    return new_order

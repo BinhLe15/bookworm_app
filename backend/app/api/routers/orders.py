@@ -6,7 +6,7 @@ from ...dependencies.auth import get_current_user
 from ...db.database import get_session
 from ...models.user import User
 from ...schemas.order import OrderRead, OrderCreate, OrderUpdate
-from ...crud.order import get_orders, get_order, create_order, update_order, delete_order
+from ...crud.order import get_orders, get_order, place_order, update_order, delete_order
 
 router = APIRouter()
 
@@ -22,14 +22,28 @@ async def read_order(order_id: int, session: Session = Depends(get_session)) -> 
     order = get_order(session, order_id)
     return order
 
-@router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
-async def create_oder_endpoint(
+# @router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
+# async def create_oder_endpoint(
+#     order_create: OrderCreate, 
+#     session: Session = Depends(get_session),
+#     current_user: User = Depends(get_current_user)
+# ) -> OrderRead:
+#     """Create order."""
+#     order = create_order(
+#         session,
+#         order_create,
+#         current_user=current_user
+#     )
+#     return order
+
+@router.post("/", response_model=List[OrderRead], status_code=status.HTTP_201_CREATED)
+async def cart_place_order(
     order_create: OrderCreate, 
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
-) -> OrderRead:
-    """Create order."""
-    order = create_order(
+):
+    """Place order."""
+    order = place_order(
         session,
         order_create,
         current_user=current_user

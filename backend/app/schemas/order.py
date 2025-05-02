@@ -3,12 +3,8 @@ from sqlmodel import Field, Numeric, SQLModel
 from datetime import datetime
 
 class OrderBase(SQLModel): 
-    order_date: datetime = Field(default_factory=datetime.now)
-    order_amount: float = Field(sa_type=Numeric(8, 2))
-
-class OrderCreate(OrderBase):
-    pass
-
+    order_date: datetime
+    order_amount: float
 class OrderUpdate(OrderBase):
     user_id: int | None = None
 
@@ -25,6 +21,10 @@ class OrderItemBase(SQLModel):
 
 class OrderItemCreate(OrderItemBase):
     book_id: int
+
+class OrderCreate(OrderBase):
+    items: List["OrderItemCreate"] = []
+    pass
 
 class OrderItemRead(OrderItemBase):
     id: int
