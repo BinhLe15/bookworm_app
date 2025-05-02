@@ -50,6 +50,7 @@ const Product: React.FC = () => {
     rating: null,
   });
   const [refreshReviews, setRefreshReviews] = useState<number>(0);
+  const [basePrice, setBasePrice] = useState<number | undefined>(undefined);
 
   const params = useParams();
   const { addToCart } = useCart();
@@ -91,7 +92,8 @@ const Product: React.FC = () => {
       book?.book_title,
       price,
       book?.book_cover_photo,
-      author?.author_name
+      author?.author_name,
+      basePrice
     );
     if (result.success) {
       toast.success(result.message, {
@@ -152,6 +154,7 @@ const Product: React.FC = () => {
         try {
           const response = await getDiscountByBookId(Number(params.id));
           setDiscounts(response.data);
+          setBasePrice(book?.book_price || 0);
         } catch (error) {
           console.error("Error fetching discounts:", error);
         }
@@ -247,7 +250,7 @@ const Product: React.FC = () => {
               {/* TODO: Fix the image onError to handle if the image is not found set image dedfault */}
               <img
                 // src={"https://picsum.photos/640/480?random=1"}
-                src={book?.book_cover_photo}
+                src={book?.book_cover_photo || defaultImage}
                 alt={book?.book_title}
                 className="w-full h-68 object-cover rounded"
                 onError={({ currentTarget }) => {
@@ -323,7 +326,6 @@ const Product: React.FC = () => {
             <span className="text-3xl font-bold">Star</span>
           </div>
           <div className="flex flex-row items-center space-x-2 ">
-            {/* TODO: Total numbers will be total records or total items*/}
             <span
               className="font-semibold underline cursor-pointer pr-2"
               onClick={() => setFilters({ ...filters, rating: null })}
