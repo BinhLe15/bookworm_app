@@ -21,7 +21,7 @@ import { Link } from "react-router-dom";
 const skip = 0;
 const limit = 8;
 
-const Home: React.FC = () => {
+const Home = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -29,8 +29,6 @@ const Home: React.FC = () => {
   const [sortBy, setSortBy] = useState<"recommended" | "popular">(
     "recommended"
   );
-
-  useEffect(() => {}, []);
 
   useEffect(() => {
     const fetchOnSaleBooks = async () => {
@@ -77,7 +75,7 @@ const Home: React.FC = () => {
     <div className="container mx-auto -p-4">
       <div className="p-7">
         <div className="flex justify-between">
-          <h2 className="text-2xl font-bold mb-4">On Sale</h2>
+          <h2 className="text-2xl font-semibold mb-4">On Sale</h2>
           <Button className="bg-gray-800">
             <Link to="/shop" className="text-white">
               View All
@@ -110,7 +108,7 @@ const Home: React.FC = () => {
         </div>
 
         <div className="justify-center">
-          <h2 className="text-2xl font-bold mb-4 mt-8 flex justify-center">
+          <h2 className="text-2xl font-medium mb-4 mt-8 flex justify-center">
             Featured Books
           </h2>
           <Tabs
@@ -123,7 +121,7 @@ const Home: React.FC = () => {
               <TabsList className="grid grid-cols-2">
                 <TabsTrigger
                   className={
-                    "data-[state=active]:bg-gray-600 data-[state=active]:text-white min-w-70 max-w-90"
+                    "data-[state=active]:bg-gray-800 data-[state=active]:text-white min-w-70 max-w-90"
                   }
                   value="recommended"
                 >
@@ -131,7 +129,7 @@ const Home: React.FC = () => {
                 </TabsTrigger>
                 <TabsTrigger
                   className={
-                    "data-[state=active]:bg-gray-600 data-[state=active]:text-white min-w-70 max-w-90"
+                    "data-[state=active]:bg-gray-800 data-[state=active]:text-white min-w-70 max-w-90"
                   }
                   value="popular"
                 >
