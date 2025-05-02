@@ -29,9 +29,10 @@ const CartProvider = ({ children }: { children: ReactNode }) => {
     id: number,
     quantity: number,
     bookTitle: string | undefined,
-    bookPrice: number | undefined,
+    bookFinalPrice: number | undefined,
     bookCoverPhoto: string | undefined,
-    bookAuthor: string | undefined
+    bookAuthor: string | undefined,
+    bookBasePrice: number | undefined
   ) => {
     const MAX_QUANTITY = 8;
 
@@ -60,10 +61,11 @@ const CartProvider = ({ children }: { children: ReactNode }) => {
       updatedCart.push({
         book_id: id,
         quantity: quantity,
-        price: bookPrice,
+        final_price: bookFinalPrice,
         book_title: bookTitle,
         book_cover_photo: bookCoverPhoto,
         book_author: bookAuthor,
+        base_price: bookBasePrice,
       });
     }
 

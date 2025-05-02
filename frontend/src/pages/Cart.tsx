@@ -12,14 +12,21 @@ import {
 import defaultImage from "../assets/default.png";
 import QuantityInput from "../components/QuantityInput";
 import { CartItem } from "../types";
+import { placeOrder } from "../services/api";
+import { AxiosError } from "axios";
+import { SignInPopUp } from "./SignIn";
+import { XIcon } from "lucide-react";
+import { toast } from "sonner";
 
 const Cart = () => {
   const { cartItems, setCartItems, getCartItemCount } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [message, setMessage] = useState("");
 
   const calculateItemTotal = (item: CartItem) => {
-    return (item?.quantity * (item.price || 0)).toFixed(2);
+    return (item?.quantity * (item.final_price || 0)).toFixed(2);
   };
 
   const updateQuantity = (bookId: number, newQuantity: number) => {
@@ -35,6 +42,47 @@ const Cart = () => {
 
     // Save the updated cart to localStorage
     localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  const handlePlaceOrder = async () => {
+    const orderData = {
+      order_date: new Date().toISOString(),
+      order_amount: 0,
+      items: cartItems.map((item) => ({
+        book_id: item.book_id,
+        quantity: item.quantity,
+        price: Number(item.final_price) || 0,
+      })),
+    };
+
+    try {
+      await placeOrder(orderData);
+      // Clear the cart after placing the order
+      setCartItems([]);
+      localStorage.removeItem("cart");
+      // Show success message
+      toast.success(
+        `Order placed successfully! Total: $${cartTotal.toFixed(2)}`,
+        { duration: 3000 }
+      );
+    } catch (error: unknown) {
+      if (
+        error instanceof AxiosError &&
+        error.response &&
+        error.response.status === 401
+      ) {
+        // Redirect to login page
+        console.log("User not authenticated. Redirecting to login...");
+        setIsDialogOpen(true);
+      } else {
+        // Handle other errors
+        toast.error(
+          "An error occurred while placing the order. Please try again.",
+          { duration: 3000 }
+        );
+        console.error("Error placing order:", error);
+      }
+    }
   };
 
   useEffect(() => {
@@ -60,9 +108,10 @@ const Cart = () => {
       setCartTotal(0);
       return;
     }
+    console.log("cartItems", cartItems);
 
     const total = cartItems.reduce((sum, item) => {
-      return sum + item.quantity * (item.price || 0);
+      return sum + item.quantity * (item.final_price || 0);
     }, 0);
 
     setCartTotal(total);
@@ -75,36 +124,44 @@ const Cart = () => {
       </h2>
       <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
       <div className="display grid grid-cols-9 gap-8 mt-6">
-        <div className="col-span-6 border border-gray-300 rounded-lg shadow-md py-8 h-fit">
+        <div className="col-span-6 border border-gray-300 rounded-lg shadow-md py-8 h-full">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-8">Product</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead className="w-32">Quantity</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead className="pl-10">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {cartItems?.map((item) => (
                 <TableRow>
-                  <TableCell className="pl-8 flex flex-row items-center">
+                  <TableCell className="pl-8 flex flex-row items-center whitespace-break-spaces">
                     <img
-                      src={item?.book_cover_photo || defaultImage}
+                      src={item?.book_cover_photo}
                       alt="default"
+                      onError={(e) => {
+                        e.currentTarget.src = defaultImage;
+                      }}
                       className="w-32 h-32"
                     />
-                    <div className="flex flex-col ml-4">
-                      <label className="text-2xl font-semibold">
+                    <div className="flex flex-col ml-4 w-fit">
+                      <label className="text-2xl font-semibold overflow-x-auto">
                         {item?.book_title || "Book Title"}
                       </label>
                       <span>{item?.book_author || "Book Author"}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="text-2xl font-semibold">
-                      ${item?.price}
-                    </span>
+                    <p className="text-2xl font-semibold">
+                      ${item?.final_price}
+                    </p>
+                    {item?.base_price && (
+                      <p className="text-lg text-gray-500 line-through">
+                        ${item?.base_price}
+                      </p>
+                    )}
                   </TableCell>
                   <TableCell>
                     <QuantityInput
@@ -117,10 +174,28 @@ const Cart = () => {
                       inputClassName="w-12"
                     />
                   </TableCell>
-                  <TableCell className="w-32">
+                  <TableCell className="w-32 pl-10">
                     <span className="text-2xl font-semibold">
                       ${calculateItemTotal(item)}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      className="!rounded-none !border-none w-fit"
+                      onClick={() => {
+                        const updatedCart = cartItems.filter(
+                          (cartItem) => cartItem.book_id !== item.book_id
+                        );
+                        setCartItems(updatedCart);
+                        localStorage.setItem(
+                          "cart",
+                          JSON.stringify(updatedCart)
+                        );
+                      }}
+                    >
+                      <XIcon />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -136,7 +211,20 @@ const Cart = () => {
             <label className="text-2xl font-bold">
               ${cartTotal.toFixed(2)}
             </label>
-            <Button className="w-full !rounded-none">Place order</Button>
+            <Button
+              className="w-full !rounded-none bg-gray-800"
+              onClick={() => {
+                handlePlaceOrder();
+              }}
+            >
+              Place order
+            </Button>
+            <SignInPopUp
+              className="hidden"
+              isOpen={isDialogOpen}
+              setIsOpen={setIsDialogOpen}
+              navigatePlace="/cart"
+            />
           </div>
         </div>
       </div>

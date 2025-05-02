@@ -9,6 +9,7 @@ import {
   Rating,
   BooksResponse,
   ReviewsResponse,
+  OrderItemCreate,
 } from "../types";
 
 const authapi = axios.create({
@@ -113,5 +114,17 @@ export const addReview = (
   }
 ): Promise<AxiosResponse> =>
   api.post(`/api/routers/reviews/${book_id}`, params);
+
+export const placeOrder = (params: {
+  order_date: string;
+  order_amount: number;
+  items: OrderItemCreate[];
+}): Promise<AxiosResponse> =>
+  authapi.post("/api/routers/orders/", params, {
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
 
 export default api;

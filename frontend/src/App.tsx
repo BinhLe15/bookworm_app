@@ -14,7 +14,7 @@ import Product from "./pages/Product";
 import Cart from "./pages/Cart";
 import { Toaster } from "sonner";
 
-const App: React.FC = () => {
+const App = () => {
   return (
     <AuthProvider>
       <CartProvider>
