@@ -21,7 +21,16 @@ def get_discount(session: Session, book_id: int):
     """Get a discount."""
     statement = (
         select(DiscountModel)
-        .where(DiscountModel.book_id == book_id)
+        .where(and_(
+            or_(
+                and_(
+                    DiscountModel.discount_start_date <= date.today(),
+                    DiscountModel.discount_end_date >= date.today()
+                ),
+                DiscountModel.discount_end_date == None
+            ),
+            DiscountModel.book_id == book_id
+        ))
     )
     return session.exec(statement).first()
 
