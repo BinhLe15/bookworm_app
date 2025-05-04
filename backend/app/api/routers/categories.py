@@ -8,5 +8,5 @@ router = APIRouter()
 @router.get("/", response_model=List[Category])
 async def get_categories(session: Session = Depends(get_session)):
     """Get all categories."""
-    categories = session.exec(select(Category)).all()
+    categories = session.exec(select(Category).order_by(Category.category_name.asc())).all()
     return categories

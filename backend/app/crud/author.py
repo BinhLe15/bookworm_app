@@ -27,6 +27,7 @@ def get_authors(session: Session):
     """Get orders."""
     statement = (
         select(AuthorModel)
+        .order_by(AuthorModel.author_name.asc())
     )
     return session.exec(statement).all()
 
