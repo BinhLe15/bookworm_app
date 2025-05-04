@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ControllerRenderProps, useForm } from "react-hook-form";
 import {
   getBookById,
@@ -28,11 +30,28 @@ import { formatNumber } from "../components/FormatNumber";
 import { useCart } from "../context/CartContext";
 import defaultImage from "../assets/default.png";
 
+// Filter schema
 interface Filters {
   rating: number | null;
 }
 
-const Product: React.FC = () => {
+// Zod schema for form validation
+const formSchema = z.object({
+  title: z
+    .string()
+    .min(1, { message: "Title is required" })
+    .max(120, { message: "Title cannot exceed 120 characters" }),
+  detail: z.string(),
+  rating: z.coerce.number().int().min(1).max(5),
+});
+
+interface FormData {
+  title: string;
+  detail: string;
+  rating: number;
+}
+
+const Product = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const [sortBy, setSortBy] = useState<string>("newest to oldest");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -55,13 +74,8 @@ const Product: React.FC = () => {
   const params = useParams();
   const { addToCart } = useCart();
 
-  interface FormData {
-    title: string;
-    detail: string;
-    rating: number;
-  }
-
   const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       detail: "",
@@ -76,8 +90,14 @@ const Product: React.FC = () => {
         rating_star: data.rating,
       });
       form.reset();
-      // Increment the counter to trigger a refresh of the reviews
-      setRefreshReviews((prev) => prev + 1);
+      // Always reset to page 1 when submitting a new review
+      setCurrentPage(1);
+      // Force immediate refresh with a small delay to allow server to process
+      setTimeout(() => {
+        setRefreshReviews((prev) => prev + 1);
+        // Ensure we fetch ratings again to update the counts
+        fetchRatings();
+      }, 300);
       toast.success("Review submitted successfully!");
     } catch (error) {
       console.error("Error submitting review:", error);
@@ -112,16 +132,13 @@ const Product: React.FC = () => {
     let avgEachRating = 0;
     let totalReviews = 0;
 
-    {
-      // get each rating star and review count in api to calculate avg rating
-      response.data.map((rating) => {
-        totalReviews += rating.review_count;
-        avgEachRating =
-          rating.rating_star * rating.review_count + avgEachRating;
-      });
-      const average = totalReviews > 0 ? avgEachRating / totalReviews : 0;
-      setAvgRating(average);
-    }
+    // get each rating star and review count in api to calculate avg rating
+    response.data.map((rating) => {
+      totalReviews += rating.review_count;
+      avgEachRating = rating.rating_star * rating.review_count + avgEachRating;
+    });
+    const average = totalReviews > 0 ? avgEachRating / totalReviews : 0;
+    setAvgRating(average);
   };
 
   useEffect(() => {
@@ -134,7 +151,7 @@ const Product: React.FC = () => {
       }
     };
     fetchBook();
-  }, []);
+  }, [params.id]);
 
   useEffect(() => {
     if (book) {
@@ -247,9 +264,7 @@ const Product: React.FC = () => {
         <div className="col-span-6">
           <div className="flex flex-row border border-gray-300 rounded-lg shadow-md">
             <div className="flex flex-col w-1/3 text-right">
-              {/* TODO: Fix the image onError to handle if the image is not found set image dedfault */}
               <img
-                // src={"https://picsum.photos/640/480?random=1"}
                 src={book?.book_cover_photo || defaultImage}
                 alt={book?.book_title}
                 className="w-full h-68 object-cover rounded"
@@ -382,7 +397,7 @@ const Product: React.FC = () => {
           </div>
           <div>
             {reviews.map((review) => (
-              <div className="flex flex-col space-y-2 py-2">
+              <div className="flex flex-col space-y-2 py-2 break-words">
                 <div className="space-x-2 pb-2">
                   <label className="text-2xl font-semibold">
                     {review.review_title}
