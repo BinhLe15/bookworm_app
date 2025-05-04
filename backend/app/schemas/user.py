@@ -2,8 +2,9 @@ from sqlmodel import SQLModel
 from typing import Optional
 
 class User(SQLModel):
-    username: str
     email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     admin: Optional[bool] = None
     
 class UserCreate(User):

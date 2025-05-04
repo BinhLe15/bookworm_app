@@ -8,20 +8,6 @@ from app.models.discount import Discount as DiscountModel
 from app.schemas.order import OrderCreate, OrderUpdate
 from app.models.order import OrderItem
 
-# def create_order(session: Session, order_create: OrderCreate, current_user: UserModel):
-#     """Create a new order."""
-#     if not current_user.id:
-#         raise HTTPException(status_code=400, detail="Cannot create order without user")
-    
-#     db_order = OrderModel(**order_create.model_dump())
-
-#     db_order.user_id = current_user.id
-
-#     session.add(db_order)
-#     session.commit()
-#     session.refresh(db_order)
-#     return db_order
-
 def get_order(session: Session, order_id: int):
     """Get a order."""
     order = session.get(OrderModel, order_id)

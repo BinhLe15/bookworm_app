@@ -36,7 +36,7 @@ def get_books(
     min_rating: Optional[int] = None
 ) -> List[Book]:
     """Get a list of books with optional filters and pagination."""
-    statement = select(BookModel).offset(skip).limit(limit)
+    statement = select(BookModel)
     count_statement = select(func.count(BookModel.id).label("total"))
 
     # Apply all filters conditionally
@@ -89,20 +89,39 @@ def get_books(
             .subquery()
         )
         statement = statement.join(sub_query, BookModel.id == sub_query.c.book_id).order_by(sub_query.c.total_reviews.desc())
-    elif sort_by == "price_asc":
-        statement = statement.join(DiscountModel, isouter=True).order_by(func.coalesce(DiscountModel.discount_price, BookModel.book_price).asc())
-    elif sort_by == "price_desc":
-        statement = statement.join(DiscountModel, isouter=True).order_by(func.coalesce(DiscountModel.discount_price, BookModel.book_price).desc())
+    elif sort_by in ["price_asc", "price_desc"]:
+        # For price sorting, add discount condition to both main query and count
+        discount_condition = or_(
+            and_(
+                DiscountModel.discount_start_date <= date.today(),
+                DiscountModel.discount_end_date >= date.today()
+            ),
+            DiscountModel.discount_end_date == None
+        )
+        
+        # Apply join and condition to both statements
+        statement = statement.join(DiscountModel, 
+                                  and_(BookModel.id == DiscountModel.book_id, 
+                                       discount_condition), 
+                                  isouter=True)
+        
+        # Apply order direction based on sort_by value
+        if sort_by == "price_asc":
+            statement = statement.order_by(func.coalesce(DiscountModel.discount_price, BookModel.book_price).asc())
+        else:  # price_desc
+            statement = statement.order_by(func.coalesce(DiscountModel.discount_price, BookModel.book_price).desc())
+
+    # Apply pagination only to the main query after all joins and conditions
+    statement = statement.offset(skip).limit(limit)
 
     books = session.exec(statement).all()
-    
-    total_books = session.exec(count_statement).one()
 
+    total_result = session.exec(count_statement).first()
 
     if not books:
         return BooksResponse(items=[], total=0)
     
-    return BooksResponse(items=books, total=total_books)
+    return BooksResponse(items=books, total=total_result)
 
 
 def update_book(session: Session, book_id: int, book_update: BookUpdate) -> Optional[Book]:
