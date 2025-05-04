@@ -51,15 +51,15 @@ export const login = (
   password: string
 ): Promise<
   AxiosResponse<{ access_token: string; refresh_token: string; user: User }>
-> => authapi.post("/api/v1/auth/login", { username: email, password });
+> => authapi.post("/api/routers/auth/login", { username: email, password });
 
 export const refresh = (
   refresh_token: string | null
 ): Promise<AxiosResponse<{ access_token: string }>> =>
-  authapi.post("/api/v1/auth/refresh", { refresh_token });
+  authapi.post("/api/routers/auth/refresh", { refresh_token });
 
 export const get_me = (): Promise<AxiosResponse<User>> =>
-  authapi.get("/api/v1/auth/users/me");
+  authapi.get("/api/routers/auth/users/me");
 
 export const getBooks = (
   params: unknown

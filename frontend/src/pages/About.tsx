@@ -14,7 +14,7 @@ const About: React.FC = () => {
             books and language classes."
           </p>
         </div>
-        <div className="display grid grid-cols-2 grid-rows-2 gap-8">
+        <div className="display grid grid-cols-2 gap-8">
           <div className="space-y-6">
             <h2 className="text-3xl font-semibold">Our Story</h2>
             <p className="text-xl">

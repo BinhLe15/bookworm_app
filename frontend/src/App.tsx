@@ -13,6 +13,7 @@ import About from "./pages/About";
 import Product from "./pages/Product";
 import Cart from "./pages/Cart";
 import { Toaster } from "sonner";
+import Footer from "./components/Footer";
 
 const App = () => {
   return (
@@ -21,18 +22,21 @@ const App = () => {
         <Router>
           <ScrollToTop />
           <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/product/:id" element={<Product />} />
-            <Route path="/cart" element={<Cart />} />
-            {/* Add more routes as needed */}
+          <div className="container mx-auto w-full">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/product/:id" element={<Product />} />
+              <Route path="/cart" element={<Cart />} />
+              {/* Add more routes as needed */}
 
-            {/* Default fallback route for unknown paths */}
-            <Route path="*" element={<NotFound />} />
-            {/* or use: <Route path="*" element={<Forbidden />} /> */}
-          </Routes>
+              {/* Default fallback route for unknown paths */}
+              <Route path="*" element={<NotFound />} />
+              {/* or use: <Route path="*" element={<Forbidden />} /> */}
+            </Routes>
+          </div>
+          <Footer />
           <Toaster richColors position="top-right" />
         </Router>
       </CartProvider>

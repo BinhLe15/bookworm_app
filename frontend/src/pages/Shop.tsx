@@ -214,12 +214,13 @@ const Shop = () => {
 
               <select
                 className="p-2 border rounded"
+                defaultValue={20}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   setItemsPerPage(Number(e.target.value))
                 }
               >
-                <option value={20}>Show 20</option>
                 <option value={25}>Show 25</option>
+                <option value={20}>Show 20</option>
                 <option value={15}>Show 15</option>
                 <option value={5}>Show 5</option>
               </select>
