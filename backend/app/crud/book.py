@@ -1,4 +1,4 @@
-from sqlmodel import Session, and_, or_, select, func, nullslast, SQLModel
+from sqlmodel import Session, and_, case, or_, select, func, nullslast, SQLModel
 from typing import List, Optional
 from app.models.book import Book as BookModel
 from app.models.review import Review as ReviewModel
@@ -36,8 +36,39 @@ def get_books(
     min_rating: Optional[int] = None
 ) -> List[Book]:
     """Get a list of books with optional filters and pagination."""
+    # sorty by feature
     statement = select(BookModel)
     count_statement = select(func.count(BookModel.id).label("total"))
+
+    # Check discount expiration before applying it
+    # Create final price and sub price condition
+    final_price = case(
+            (
+                (DiscountModel.discount_price.is_not(None)) & 
+                (
+                    (DiscountModel.discount_end_date.is_(None)) | 
+                    ((DiscountModel.discount_start_date <= date.today()) & 
+                    (DiscountModel.discount_end_date >= date.today()))
+                ),
+                DiscountModel.discount_price
+            ),
+            # Otherwise use the book price
+            else_=BookModel.book_price
+        ).label("final_price")
+    
+    sub_price = case(
+            (
+                (DiscountModel.discount_price.is_not(None)) & 
+                (
+                    (DiscountModel.discount_end_date.is_(None)) | 
+                    ((DiscountModel.discount_start_date <= date.today()) & 
+                    (DiscountModel.discount_end_date >= date.today()))
+                ),
+                ( BookModel.book_price - DiscountModel.discount_price)
+            ),
+            # Otherwise use the book price
+            else_= None
+        ).label("sub_price")
 
     # Apply all filters conditionally
     if category_id:
@@ -60,35 +91,27 @@ def get_books(
         count_statement = count_statement.join(rating_subquery)
     
     if sort_by == "onsale":
+        statement = statement.outerjoin(DiscountModel).order_by(nullslast(sub_price.desc()), final_price.asc())
+
+    elif sort_by == "recommended":
         sub_query = (
-            select(DiscountModel.book_id, DiscountModel.discount_price)
-            .where(or_(
-            and_(
-                DiscountModel.discount_start_date <= date.today(),
-                DiscountModel.discount_end_date >= date.today()
-            ),
-            DiscountModel.discount_end_date == None
-        ))
+            select(ReviewModel.book_id, func.avg(ReviewModel.rating_star).label("avg_rating"))
+            .group_by(ReviewModel.book_id)
+            .subquery()
+        )
+        statement = statement.outerjoin(sub_query).outerjoin(DiscountModel).order_by(nullslast(sub_query.c.avg_rating.desc()), final_price.asc())
+
+    elif sort_by == "popular":
+        sub_query = (
+            select(ReviewModel.book_id, func.count(ReviewModel.id).label("total_reviews"))
+            .group_by(ReviewModel.book_id)
             .subquery()
         )
 
-        statement = statement.join(sub_query, isouter=True).order_by(nullslast((BookModel.book_price - sub_query.c.discount_price).desc()))
-    elif sort_by == "recommended":
-        sub_query = (
-            select(ReviewModel.book_id, func.avg(ReviewModel.rating_star)
-            .label("avg_rating"))
-            .group_by(ReviewModel.book_id)
-            .subquery()
-        )
-        statement = statement.join(sub_query, BookModel.id == sub_query.c.book_id).order_by(sub_query.c.avg_rating.desc())
-    elif sort_by == "popular":
-        sub_query = (
-            select(ReviewModel.book_id, func.count(ReviewModel.id)
-            .label("total_reviews"))
-            .group_by(ReviewModel.book_id)
-            .subquery()
-        )
-        statement = statement.join(sub_query, BookModel.id == sub_query.c.book_id).order_by(sub_query.c.total_reviews.desc())
+        statement = statement.outerjoin(sub_query).outerjoin(DiscountModel).order_by(
+            nullslast(sub_query.c.total_reviews.desc()), 
+            final_price.asc())
+        
     elif sort_by in ["price_asc", "price_desc"]:
         # For price sorting, add discount condition to both main query and count
         discount_condition = or_(
@@ -107,9 +130,9 @@ def get_books(
         
         # Apply order direction based on sort_by value
         if sort_by == "price_asc":
-            statement = statement.order_by(func.coalesce(DiscountModel.discount_price, BookModel.book_price).asc())
+            statement = statement.order_by(final_price.asc())
         else:  # price_desc
-            statement = statement.order_by(func.coalesce(DiscountModel.discount_price, BookModel.book_price).desc())
+            statement = statement.order_by(final_price.desc())
 
     # Apply pagination only to the main query after all joins and conditions
     statement = statement.offset(skip).limit(limit)
