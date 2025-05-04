@@ -9,6 +9,7 @@ from app.dependencies.auth import authenticate_user, get_current_user, get_user
 from sqlmodel import Session
 from app.db.database import get_session
 from app.models.user import User
+from app.schemas.auth import LoginResponse, RefreshResponse
 
 router = APIRouter()
 
@@ -36,28 +37,7 @@ async def login_for_access_token(
         data={"sub": user.email}, expires_delta=refresh_token_expires
     )
 
-    # Set refresh token in an HTTP-only cookie
-    # response.set_cookie(
-    #     key="refresh_token",
-    #     value=refresh_token,
-    #     httponly=True,
-    #     secure=False,  # Set to True in production with HTTPS
-    #     samesite="strict",
-    #     max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-    # )
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": {
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "admin": user.admin,
-            "id": user.id,
-        }
-    }
+    return LoginResponse(access_token=access_token, refresh_token=refresh_token, token_type="bearer", user=user)
     
 
 @router.post("/refresh")
@@ -88,17 +68,11 @@ async def refresh_access_token(
     new_access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {
-        "access_token": new_access_token,
-        "token_type": "bearer",
-        "user": {
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "admin": user.admin,
-            "id": user.id,
-        }
-    }
+    return RefreshResponse(
+        access_token=new_access_token,
+        token_type="bearer",
+        user=user
+    )
 
 @router.get("/users/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):

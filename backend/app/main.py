@@ -5,7 +5,7 @@ from app.api.routers.books import router as books_router
 from app.api.routers.authors import router as authors_router
 from app.api.routers.categories import router as categories_router
 from app.api.routers.cart import router as cart_router
-from app.api.v1.auth import router as auth_router
+from app.api.routers.auth import router as auth_router
 from app.api.routers.discounts import router as discounts_router
 from app.api.routers.reviews import router as reviews_router
 from app.api.routers.orders import router as orders_router
@@ -48,7 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )  
 
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(auth_router, prefix="/api/routers/auth", tags=["auth"])
 app.include_router(books_router, prefix="/api/routers/books", tags=["books"])
 app.include_router(authors_router, prefix="/api/routers/authors", tags=["authors"])
 app.include_router(categories_router, prefix="/api/routers/categories", tags=["categories"])
