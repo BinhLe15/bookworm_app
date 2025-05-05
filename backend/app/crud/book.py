@@ -1,4 +1,4 @@
-from sqlmodel import Session, select, func, nullslast, SQLModel
+from sqlmodel import Session, and_, or_, select, func, nullslast, SQLModel
 from typing import List, Optional
 from app.models.book import Book as BookModel
 from app.models.review import Review as ReviewModel
@@ -6,6 +6,7 @@ from app.models.discount import Discount as DiscountModel
 from app.schemas.book import BookCreate, BookUpdate, Book, BookRead
 from datetime import date
 
+# TODO: move this to response schema
 class BooksResponse(SQLModel):
     items: List[BookRead]
     total: int
@@ -24,11 +25,6 @@ def get_book(session: Session, book_id: int) -> Optional[Book]:
     if not book:
         return None
     return book
-
-def get_books(session: Session, skip: int = 0, limit: int = 20) -> List[Book]:
-    """Get a list of books with optional filters and pagination."""
-    statement = select(BookModel).offset(skip).limit(limit)
-    return session.exec(statement).all()
 
 def get_books(
     session: Session, 
@@ -66,7 +62,13 @@ def get_books(
     if sort_by == "onsale":
         sub_query = (
             select(DiscountModel.book_id, DiscountModel.discount_price)
-            .where(DiscountModel.discount_start_date <= date.today(), DiscountModel.discount_end_date >= date.today())
+            .where(or_(
+            and_(
+                DiscountModel.discount_start_date <= date.today(),
+                DiscountModel.discount_end_date >= date.today()
+            ),
+            DiscountModel.discount_end_date == None
+        ))
             .subquery()
         )
 
