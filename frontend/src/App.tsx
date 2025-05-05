@@ -20,7 +20,7 @@ const App = () => {
         <Router>
           <ScrollToTop />
           <Navbar />
-          <div className="container mx-auto w-full">
+          <div className="container mx-auto w-full min-h-screen">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Shop />} />
