@@ -16,10 +16,10 @@ async def read_discounts(session: Session = Depends(get_session)):
         session
     )
     return discounts
-@router.get("/{discount_id}", response_model=Discount)
-async def read_discount(discount_id: int, session: Session = Depends(get_session)):
+@router.get("/{book_id}", response_model=Discount)
+async def read_discount(book_id: int, session: Session = Depends(get_session)):
     """Get discount by ID."""
-    discount = get_discount(session, discount_id)
+    discount = get_discount(session, book_id)
     return discount
 
 @router.post("/", response_model=DiscountRead, status_code=status.HTTP_201_CREATED)
