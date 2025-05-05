@@ -95,14 +95,14 @@ const Shop: React.FC = () => {
 
   return (
     <div className="container mx-auto p-12">
-      <h2 className="text-2xl font-bold mb-8 mt-4">
+      <h2 className="text-2xl font-medium my-4">
         Books{" "}
         {(filters.category || filters.author || filters.rating) &&
           `(Filtered by ${[filters.category, filters.author, filters.rating]
             .filter(Boolean)
             .join(", ")})`}
-        <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2"></div>
       </h2>
+      <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2"></div>
       <div className="flex">
         <div className="w-1/4 pr-4">
           <h3 className="text-lg font-semibold mb-2">Filters</h3>
