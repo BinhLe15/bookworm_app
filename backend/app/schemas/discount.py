@@ -5,7 +5,7 @@ from datetime import date
 class DiscountBase(SQLModel):
     book_id: Optional[int]
     discount_start_date: date
-    discount_end_date: date
+    discount_end_date: Optional[date]
     discount_price: float
 
 class DiscountCreate(DiscountBase):

@@ -27,7 +27,9 @@ class BookUpdate(SQLModel):
 
 class BookRead(Book):
     id: int
-    category: Optional[CategoryRead] = None
+    category_id: Optional[int] = None
+    author_id: Optional[int] = None
+    avg_rating: Optional[float] = None
 
 class BookReadWithDetails(BookRead):
     authors: List[AuthorRead] = []

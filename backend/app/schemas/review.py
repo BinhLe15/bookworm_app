@@ -18,11 +18,15 @@ class ReviewUpdate(ReviewBase):
     """Schema for updating a review."""
     pass
 
+class RatingRead(SQLModel):
+    """Schema for reading a rating."""
+    rating_star: int
+    review_count: int
+
 class ReviewRead(ReviewBase):
     """Schema for reading a review."""
     id: int
     book_id: int
-
 
 class RecommendationRead(SQLModel):
     """Schema for reading a review."""
