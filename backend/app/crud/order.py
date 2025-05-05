@@ -100,6 +100,30 @@ def place_order(session: Session, order_create: OrderCreate, current_user: UserM
     )
     session.add(new_order)
     session.flush()
+
+    for item in order_create.items:
+        book = session.get(BookModel, item.book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail=f"Book with id {item.book_id} not found")
+        
+        discount = session.exec(
+            select(DiscountModel)
+            .where(DiscountModel.book_id == item.book_id, 
+                   DiscountModel.discount_start_date <= datetime.now(),
+                   (DiscountModel.discount_end_date == None) | 
+                   (DiscountModel.discount_end_date >= datetime.now())
+            )
+        ).first()
+
+        # Use discounted price if available, otherwise use regular price
+        price = float(discount.discount_price) if discount else float(book.book_price)
+        order_item = OrderItem(
+            order_id=new_order.id,
+            book_id=item.book_id,
+            quantity=item.quantity,
+            price=price
+        )
+        session.add(order_item)
     
     session.commit()
     
