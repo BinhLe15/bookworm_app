@@ -50,6 +50,7 @@ def delete_order(session: Session, order_id: int):
 
 def place_order(session: Session, order_create: OrderCreate, current_user: UserModel):
     """Place an order."""
+    invalid_items = []
     # Validate user
     if not current_user.id:
         raise HTTPException(status_code=400, detail="Stay logged in to place an order")
@@ -61,7 +62,11 @@ def place_order(session: Session, order_create: OrderCreate, current_user: UserM
     for item in order_create.items:
         book = session.get(BookModel, item.book_id)
         if not book:
-            raise HTTPException(status_code=404, detail=f"Book with id {item.book_id} not found")
+            invalid_items.append({
+                "book_id": item.book_id,
+                "error": f"Book with id {item.book_id} not found"
+            })
+            continue  # Skip this item but continue checking others
         
         discount = session.exec(
             select(DiscountModel)
@@ -77,6 +82,16 @@ def place_order(session: Session, order_create: OrderCreate, current_user: UserM
         item_total = item.quantity * price
         total_amount += item_total
 
+    # If any items are invalid, raise exception with all errors
+    if invalid_items:
+        raise HTTPException(
+            status_code=400, 
+            detail={
+                "message": "Some items in your order are invalid",
+                "invalid_items": invalid_items
+            }
+        )
+
     # Create new order
     new_order = OrderModel(
         user_id=current_user.id,
@@ -85,30 +100,6 @@ def place_order(session: Session, order_create: OrderCreate, current_user: UserM
     )
     session.add(new_order)
     session.flush()
-
-    for item in order_create.items:
-        book = session.get(BookModel, item.book_id)
-        if not book:
-            raise HTTPException(status_code=404, detail=f"Book with id {item.book_id} not found")
-        
-        discount = session.exec(
-            select(DiscountModel)
-            .where(DiscountModel.book_id == item.book_id, 
-                   DiscountModel.discount_start_date <= datetime.now(),
-                   (DiscountModel.discount_end_date == None) | 
-                   (DiscountModel.discount_end_date >= datetime.now())
-            )
-        ).first()
-
-        # Use discounted price if available, otherwise use regular price
-        price = float(discount.discount_price) if discount else float(book.book_price)
-        order_item = OrderItem(
-            order_id=new_order.id,
-            book_id=item.book_id,
-            quantity=item.quantity,
-            price=price
-        )
-        session.add(order_item)
     
     session.commit()
     

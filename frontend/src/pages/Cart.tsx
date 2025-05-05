@@ -18,12 +18,17 @@ import { SignInPopUp } from "./SignIn";
 import { XIcon } from "lucide-react";
 import { toast } from "sonner";
 
+interface InvalidItem {
+  book_id: number;
+  error: string;
+}
+
 const Cart = () => {
   const { cartItems, setCartItems, getCartItemCount } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [message, setMessage] = useState("");
+  const [invalidBooks, setInvalidBooks] = useState<CartItem[]>([]);
 
   const calculateItemTotal = (item: CartItem) => {
     return (item?.quantity * (item.final_price || 0)).toFixed(2);
@@ -42,6 +47,15 @@ const Cart = () => {
 
     // Save the updated cart to localStorage
     localStorage.setItem("cart", JSON.stringify(updatedCart));
+
+    // Delete the item if quantity is 0
+    if (newQuantity === 0) {
+      const filteredCart = updatedCart.filter(
+        (item) => item.book_id !== bookId
+      );
+      setCartItems(filteredCart);
+      localStorage.setItem("cart", JSON.stringify(filteredCart));
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -63,8 +77,12 @@ const Cart = () => {
       // Show success message
       toast.success(
         `Order placed successfully! Total: $${cartTotal.toFixed(2)}`,
-        { duration: 3000 }
+        { duration: 1000 }
       );
+      // Redirect to home page
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     } catch (error: unknown) {
       if (
         error instanceof AxiosError &&
@@ -75,12 +93,44 @@ const Cart = () => {
         console.log("User not authenticated. Redirecting to login...");
         setIsDialogOpen(true);
       } else {
-        // Handle other errors
-        toast.error(
-          "An error occurred while placing the order. Please try again.",
-          { duration: 3000 }
-        );
-        console.error("Error placing order:", error);
+        // Handle item-specific errors
+        if (error instanceof AxiosError && error.response?.data) {
+          const responseData = error.response.data;
+          const cart = localStorage.getItem("cart");
+
+          if (cart) {
+            const parsedCart = JSON.parse(cart);
+            const newInvalidBooks = [...invalidBooks];
+            responseData.detail.invalid_items.forEach(
+              (element: InvalidItem) => {
+                const errorBook = parsedCart.find(
+                  (item: CartItem) => item.book_id === element.book_id
+                );
+                newInvalidBooks.push(errorBook);
+                console.log("Invalid book:", element);
+              }
+            );
+            setInvalidBooks(newInvalidBooks);
+            console.log("Updated invalidBooks:", newInvalidBooks);
+            toast.error(
+              `Unvalid books: ${newInvalidBooks.map(
+                (item) => item.book_title
+              )}.`,
+              {
+                duration: 4000,
+              }
+            );
+            // Remove invalid books from the cart
+            const updatedCart = parsedCart.filter(
+              (item: CartItem) =>
+                !newInvalidBooks.some(
+                  (invalidBook) => invalidBook.book_id === item.book_id
+                )
+            );
+            setCartItems(updatedCart);
+            localStorage.setItem("cart", JSON.stringify(updatedCart));
+          }
+        }
       }
     }
   };
@@ -138,20 +188,28 @@ const Cart = () => {
               {cartItems?.map((item) => (
                 <TableRow>
                   <TableCell className="pl-8 flex flex-row items-center whitespace-break-spaces">
-                    <img
-                      src={item?.book_cover_photo}
-                      alt="default"
-                      onError={(e) => {
-                        e.currentTarget.src = defaultImage;
-                      }}
-                      className="w-32 h-32"
-                    />
-                    <div className="flex flex-col ml-4 w-fit">
-                      <label className="text-2xl font-semibold overflow-x-auto">
-                        {item?.book_title || "Book Title"}
-                      </label>
-                      <span>{item?.book_author || "Book Author"}</span>
-                    </div>
+                    <a
+                      href={`/product/${item.book_id}`}
+                      target="_blank"
+                      className="flex flex-row items-center"
+                    >
+                      <img
+                        src={item?.book_cover_photo || defaultImage}
+                        alt="default"
+                        onError={(e) => {
+                          e.currentTarget.src = defaultImage;
+                        }}
+                        className="w-32 h-32"
+                      />
+                      <div className="flex flex-col ml-4 w-fit">
+                        <span className="text-2xl font-semibold overflow-x-auto">
+                          {item?.book_title || "Book Title"}
+                        </span>
+                        <span className="mt-2">
+                          {item?.book_author || "Book Author"}
+                        </span>
+                      </div>
+                    </a>
                   </TableCell>
                   <TableCell>
                     <p className="text-2xl font-semibold">
@@ -169,7 +227,7 @@ const Cart = () => {
                       onChange={(value) => {
                         updateQuantity(item.book_id, value);
                       }}
-                      min={1}
+                      min={0}
                       max={8}
                       inputClassName="w-12"
                     />
