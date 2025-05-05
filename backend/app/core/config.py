@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 4320
     PROJECT_NAME: str = "FastAPI Project"
     PROJECT_VERSION: str = "0.1.0"
     PROJECT_DESCRIPTION: str = "A FastAPI project"

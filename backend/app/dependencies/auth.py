@@ -36,6 +36,7 @@ async def authenticate_user(email: str, password: str, session: Session = Depend
     return user
 
 async def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> User:
+    """Get the current user from the token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
