@@ -87,6 +87,7 @@ const Product = () => {
       addReview(Number(params.id), {
         review_title: data.title,
         review_details: data.detail,
+        review_date: new Date().toISOString(),
         rating_star: data.rating,
       });
       form.reset();

@@ -110,6 +110,7 @@ export const addReview = (
   params: {
     review_title: string;
     review_details: string;
+    review_date: string;
     rating_star: number;
   }
 ): Promise<AxiosResponse> =>
