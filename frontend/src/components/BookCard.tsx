@@ -34,26 +34,32 @@ const BookCard: React.FC<BookCardProps> = ({ book, discounts, author_id }) => {
     : book.book_price;
 
   return (
-    <div className="border rounded-lg p-4 shadow-md hover:shadow-lg transition">
+    <div className="border rounded-lg m-4 shadow-md hover:shadow-lg transition">
       <Link to={`/product/${book.id}`}>
         <img
           src={"https://picsum.photos/640/480?random=" + book.id}
           alt={book.book_title}
           className="w-full h-68 object-cover rounded"
         />
-        <h3 className="text-lg font-semibold mt-2 overflow-hidden truncate">
-          {book.book_title}
-        </h3>
-        <h5 className="text-sm mt-2">{author?.author_name}</h5>
-        {activeDiscount && (
-          // Convert to string and then to float to avoid "0.00" book.book_price}
-          <p className="text-red-500 line-through">
-            ${parseFloat(book.book_price.toString()).toFixed(2)}
+        <div className="p-4">
+          <h3 className="text-lg font-semibold mt-2 overflow-hidden truncate">
+            {book.book_title}
+          </h3>
+          <h5 className="text-sm mt-2">{author?.author_name}</h5>
+        </div>
+
+        <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
+        <div className="flex flex-row items-center p-4 space-x-1">
+          {activeDiscount && (
+            // Convert to string and then to float to avoid "0.00" book.book_price}
+            <p className="text-gray-400 line-through">
+              ${parseFloat(book.book_price.toString()).toFixed(2)}
+            </p>
+          )}
+          <p className="text-lg text-black font-bold">
+            ${parseFloat(price.toString()).toFixed(2)}
           </p>
-        )}
-        <p className="text-gray-600">
-          ${parseFloat(price.toString()).toFixed(2)}
-        </p>
+        </div>
       </Link>
     </div>
   );
