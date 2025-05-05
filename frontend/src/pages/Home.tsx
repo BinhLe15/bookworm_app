@@ -117,7 +117,7 @@ const Home = () => {
               setSortBy(value as "recommended" | "popular")
             }
           >
-            <div className="flex justify-center p-2">
+            <div className="flex justify-center pb-8">
               <TabsList className="grid grid-cols-2">
                 <TabsTrigger
                   className={

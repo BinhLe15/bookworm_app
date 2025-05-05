@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { SignInPopUp } from "../pages/SignIn";
 import { useCart } from "../context/CartContext";
@@ -29,6 +29,7 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const { getCartItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const count = getCartItemCount();
@@ -39,6 +40,13 @@ const Navbar = () => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Helper function to determine if a link is active
+  const getLinkClass = (path: string) => {
+    return location.pathname === path
+      ? "text-lg font-semibold text-white underline underline-offset-4 hover:text-gray-400"
+      : "text-lg font-normal text-white hover:text-gray-400";
   };
 
   return (
@@ -66,24 +74,16 @@ const Navbar = () => {
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-12">
           <Link to="/">
-            <span className="text-lg font-semibold text-white hover:text-gray-400 focus:underline">
-              Home
-            </span>
+            <span className={getLinkClass("/")}>Home</span>
           </Link>
           <Link to="/shop">
-            <span className="text-lg font-semibold text-white hover:text-gray-400 focus:underline">
-              Shop
-            </span>
+            <span className={getLinkClass("/shop")}>Shop</span>
           </Link>
           <Link to="/about">
-            <span className="text-lg font-semibold text-white hover:text-gray-400 focus:underline">
-              About
-            </span>
+            <span className={getLinkClass("/about")}>About</span>
           </Link>
           <Link to="/cart">
-            <span className="text-lg font-semibold text-white hover:text-gray-400 focus:underline">
-              Cart ({cartCount})
-            </span>
+            <span className={getLinkClass("/cart")}>Cart ({cartCount})</span>
           </Link>
           <div>
             {user ? (
