@@ -149,6 +149,7 @@ const Product = () => {
         setBook(response.data);
       } catch (error) {
         console.error("Error fetching book:", error);
+        window.location.href = "/404";
       }
     };
     fetchBook();
