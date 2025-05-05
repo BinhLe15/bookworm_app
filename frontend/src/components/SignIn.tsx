@@ -1,6 +1,6 @@
 import { Dispatch, useState } from "react"; // Removed unused imports
 import { useNavigate } from "react-router-dom"; // Removed unused imports
-import { Button } from "../components/ui/button";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../components/ui/dialog";
+} from "./ui/dialog";
 import {
   Form,
   FormControl,
@@ -16,8 +16,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../components/ui/form";
-import { Input } from "../components/ui/input";
+} from "./ui/form";
+import { Input } from "./ui/input";
 import { useAuth } from "../context/AuthContext";
 import { useForm } from "react-hook-form";
 

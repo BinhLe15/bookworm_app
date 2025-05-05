@@ -257,121 +257,375 @@ const Product = () => {
 
   return (
     <div className="container mx-auto p-12">
-      <div className="mb-6">
-        <h2 className="text-2xl font-medium my-4">Category Name</h2>
-        <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
+      {/* Desktop view */}
+      <div className="hidden md:flex flex-col">
+        <div className="mb-6">
+          <h2 className="text-2xl font-medium my-4">Category Name</h2>
+          <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
+        </div>
+        <div className="display grid grid-cols-9 grid-rows-[auto_auto] gap-10">
+          <div className="col-span-6">
+            <div className="flex flex-row border border-gray-300 rounded-lg shadow-md">
+              <div className="flex flex-col w-1/3 text-right">
+                <img
+                  src={book?.book_cover_photo || defaultImage}
+                  alt={book?.book_title}
+                  className="w-full h-68 object-cover rounded"
+                  onError={({ currentTarget }) => {
+                    // handle image link error
+                    currentTarget.onerror = null; // prevents looping
+                    currentTarget.src = defaultImage;
+                  }}
+                />
+                <div className="py-4 break-words">
+                  <span>By (author) </span>
+                  <span className="font-semibold">{author?.author_name}</span>
+                </div>
+              </div>
+              <div className="m-8 w-fit">
+                <h2 className="text-2xl font-semibold mb-2">
+                  {book?.book_title}
+                </h2>
+                <p className="text-gray-700">{book?.book_summary}</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-span-3 col-start-7 flex flex-col h-fit">
+            <div className="flex flex-col border border-gray-300 rounded-lg shadow-md py-4 px-4">
+              <div className="flex flex-row items-center space-x-1">
+                {discount && (
+                  <span className="text-gray-400 text-lg line-through">
+                    $
+                    {parseFloat(book?.book_price?.toString() || "0").toFixed(2)}
+                  </span>
+                )}
+                <span className="text-2xl font-bold">
+                  ${parseFloat(price?.toString() || "0").toFixed(2)}
+                </span>
+              </div>
+
+              <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
+              <div className="my-8">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quantity
+                </label>
+                <QuantityInput
+                  className="mt-4"
+                  value={quantity}
+                  onChange={setQuantity}
+                  min={1}
+                  max={8}
+                />
+                <button
+                  className="bg-gray-300 w-full mt-8"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="col-span-6 row-start-2 flex flex-col border border-gray-300 rounded-lg shadow-md p-8 h-fit">
+            <div className="space-x-2">
+              <label className="text-2xl font-semibold mb-2">
+                Customer Reviews
+              </label>
+              <span className="text-medium text-gray-500">
+                {filters.rating &&
+                  `(Filtered by ${[filters.rating]
+                    .filter(Boolean)
+                    .join(", ")} star)`}
+              </span>
+            </div>
+
+            <div className="space-x-4">
+              <span className="text-3xl font-bold">
+                {formatNumber(avgRating)}
+              </span>
+              <span className="text-3xl font-bold">Star</span>
+            </div>
+            <div className="flex flex-row items-center space-x-2 ">
+              <span
+                className="font-semibold underline cursor-pointer pr-2"
+                onClick={() => setFilters({ ...filters, rating: null })}
+              >
+                ({totalItems})
+              </span>
+              {[5, 4, 3, 2, 1].map((star, index) => (
+                <span key={star}>
+                  <span
+                    className="cursor-pointer underline"
+                    onClick={() => setFilters({ ...filters, rating: star })}
+                  >
+                    {star} Star ({getReviewCount(star)})
+                  </span>
+                  {index < 4 && <span> | </span>}
+                </span>
+              ))}
+            </div>
+            <div className="flex justify-between items-center">
+              <label className="my-4">
+                Showing {startItem}-{endItem} of{" "}
+                {getReviewCount(filters?.rating || null)} reviews
+              </label>
+              <div>
+                <select
+                  className="p-2 mr-4 border rounded bg-gray-300"
+                  defaultValue="onsale"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setSortBy(e.target.value)
+                  }
+                >
+                  {["newest to oldest", "oldest to newest"].map((item) => (
+                    <option className="bg-white" value={item} key={item}>
+                      Sort by date: {item}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="p-2 border rounded bg-gray-300"
+                  defaultValue={20}
+                  // Set the number of items per page
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setItemsPerPage(Number(e.target.value))
+                  }
+                >
+                  {[25, 20, 15, 5].map((item) => (
+                    <option className="bg-white" value={item} key={item}>
+                      Show {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              {reviews.map((review) => (
+                <div className="flex flex-col space-y-2 py-2 break-words">
+                  <div className="space-x-2 pb-2">
+                    <label className="text-2xl font-semibold">
+                      {review.review_title}
+                    </label>
+                    <span>|</span>
+                    {/* TODO: Check if star = 1 change to star not stars */}
+                    <span>{review.rating_star} stars</span>
+                  </div>
+                  <p>{review.review_details}</p>
+                  <span className="text-sm">
+                    {new Date(review.review_date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                  <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
+                </div>
+              ))}
+              <div className="my-2">
+                <PaginationCustom
+                  itemsPerPage={itemsPerPage}
+                  totalItems={getReviewCount(filters?.rating || null)} // Total items will be total records or total items
+                  currentPage={currentPage}
+                  // Handle page change and set the current page
+                  onPageChange={(page: number) => setCurrentPage(page)}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-row h-fit col-span-3 col-start-7 row-start-2 border border-gray-300 rounded-lg shadow-md">
+            {/* TODO: Add required validation for title and detail */}
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onFormSubmit)}
+                className="space-y-8 p-8 w-full"
+              >
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({
+                    field,
+                  }: {
+                    field: ControllerRenderProps<FormData, "title">;
+                  }) => (
+                    <FormItem>
+                      <FormLabel>Add a title</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="border border-gray-300 shadow-md"
+                          type="text"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="detail"
+                  render={({
+                    field,
+                  }: {
+                    field: ControllerRenderProps<FormData, "detail">;
+                  }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Details please! Your review helps other shoppers
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className="border border-gray-300 shadow-md"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="rating"
+                  render={({
+                    field,
+                  }: {
+                    field: ControllerRenderProps<FormData, "rating">;
+                  }) => (
+                    <FormItem>
+                      <FormLabel>Select a rating star</FormLabel>
+                      <FormControl>
+                        <select
+                          className="h-10 border border-gray-300 shadow-md"
+                          {...field}
+                        >
+                          <option value={1}>1 Star</option>
+                          <option value={2}>2 Stars</option>
+                          <option value={3}>3 Stars</option>
+                          <option value={4}>4 Stars</option>
+                          <option value={5}>5 Stars</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit">Submit</Button>
+              </form>
+            </Form>
+          </div>
+        </div>
       </div>
-      <div className="display grid grid-cols-9 grid-rows-[auto_auto] gap-10">
-        <div className="col-span-6">
-          <div className="flex flex-row border border-gray-300 rounded-lg shadow-md">
-            <div className="flex flex-col w-1/3 text-right">
-              <img
-                src={book?.book_cover_photo || defaultImage}
-                alt={book?.book_title}
-                className="w-full h-68 object-cover rounded"
-                onError={({ currentTarget }) => {
-                  // handle image link error
-                  currentTarget.onerror = null; // prevents looping
-                  currentTarget.src = defaultImage;
-                }}
-              />
-              <div className="py-4">
+
+      {/* Mobile view */}
+      <div className="md:hidden flex flex-col">
+        <div className="mb-6">
+          <h2 className="text-2xl font-medium my-4">Category Name</h2>
+          <div className="border-b border-gray-300 pb-2" />
+        </div>
+
+        {/* Book info section */}
+        <div className="flex flex-col border border-gray-300 rounded-lg shadow-md mb-6">
+          <div className="flex flex-row p-4">
+            <img
+              src={book?.book_cover_photo || defaultImage}
+              alt={book?.book_title}
+              className="max-w-[250px] object-cover rounded mb-4 mr-4"
+              onError={({ currentTarget }) => {
+                currentTarget.onerror = null;
+                currentTarget.src = defaultImage;
+              }}
+            />
+            <div className="flex flex-col w-fit ml-4">
+              <h2 className="text-xl font-semibold mb-2">{book?.book_title}</h2>
+              <div className="py-2">
                 <span>By (author) </span>
                 <span className="font-semibold">{author?.author_name}</span>
               </div>
             </div>
-            <div className="m-8 w-fit">
-              <h2 className="text-2xl font-semibold mb-2">
-                {book?.book_title}
-              </h2>
-              <p className="text-gray-700">{book?.book_summary}</p>
-            </div>
+          </div>
+          <div className="p-4">
+            <p className="text-gray-700 text-sm">{book?.book_summary}</p>
           </div>
         </div>
-        <div className="col-span-3 col-start-7 flex flex-col h-fit">
-          <div className="flex flex-col border border-gray-300 rounded-lg shadow-md py-4 px-4">
-            <div className="flex flex-row items-center space-x-1">
-              {discount && (
-                <span className="text-gray-400 text-lg line-through">
-                  ${parseFloat(book?.book_price?.toString() || "0").toFixed(2)}
-                </span>
-              )}
-              <span className="text-2xl font-bold">
-                ${parseFloat(price?.toString() || "0").toFixed(2)}
-              </span>
-            </div>
 
-            <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
-            <div className="my-8">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Quantity
-              </label>
-              <QuantityInput
-                className="mt-4"
-                value={quantity}
-                onChange={setQuantity}
-                min={1}
-                max={8}
-              />
-              <button
-                className="bg-gray-300 w-full mt-8"
-                onClick={handleAddToCart}
-              >
-                Add to Cart
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="col-span-6 row-start-2 flex flex-col border border-gray-300 rounded-lg shadow-md p-8 h-fit">
-          <div className="space-x-2">
-            <label className="text-2xl font-semibold mb-2">
-              Customer Reviews
-            </label>
-            <span className="text-medium text-gray-500">
-              {filters.rating &&
-                `(Filtered by ${[filters.rating]
-                  .filter(Boolean)
-                  .join(", ")} star)`}
+        {/* Price and Add to Cart section */}
+        <div className="flex flex-col border border-gray-300 rounded-lg shadow-md p-4 mb-6">
+          <div className="flex items-center mb-2">
+            {discount && (
+              <span className="text-gray-400 text-base line-through mr-2">
+                ${parseFloat(book?.book_price?.toString() || "0").toFixed(2)}
+              </span>
+            )}
+            <span className="text-xl font-bold">
+              ${parseFloat(price?.toString() || "0").toFixed(2)}
             </span>
           </div>
 
-          <div className="space-x-4">
-            <span className="text-3xl font-bold">
+          <div className="border-b border-gray-300 pb-2 mb-4" />
+
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Quantity
+          </label>
+          <QuantityInput
+            value={quantity}
+            onChange={setQuantity}
+            min={1}
+            max={8}
+            className="mb-4"
+          />
+          <button className="bg-gray-300 w-full py-2" onClick={handleAddToCart}>
+            Add to Cart
+          </button>
+        </div>
+
+        {/* Reviews section */}
+        <div className="flex flex-col border border-gray-300 rounded-lg shadow-md p-4 mb-6">
+          <div className="flex items-center mb-2">
+            <h3 className="text-xl font-semibold">Customer Reviews</h3>
+            {filters.rating && (
+              <span className="text-sm text-gray-500 ml-2">
+                (Filtered by {filters.rating} star)
+              </span>
+            )}
+          </div>
+
+          <div className="mb-2">
+            <span className="text-2xl font-bold">
               {formatNumber(avgRating)}
             </span>
-            <span className="text-3xl font-bold">Star</span>
+            <span className="text-2xl font-bold ml-2">Star</span>
           </div>
-          <div className="flex flex-row items-center space-x-2 ">
+
+          <div className="flex flex-wrap gap-2 mb-4">
             <span
-              className="font-semibold underline cursor-pointer pr-2"
+              className="text-sm font-semibold underline cursor-pointer mr-4"
               onClick={() => setFilters({ ...filters, rating: null })}
             >
-              ({totalItems})
+              All ({totalItems})
             </span>
-            {[5, 4, 3, 2, 1].map((star, index) => (
-              <span key={star}>
+
+            {[5, 4, 3, 2, 1].map((star) => (
+              <span key={star} className="text-sm mr-4">
                 <span
                   className="cursor-pointer underline"
                   onClick={() => setFilters({ ...filters, rating: star })}
                 >
-                  {star} Star ({getReviewCount(star)})
+                  {star} ({getReviewCount(star)})
                 </span>
-                {index < 4 && <span> | </span>}
               </span>
             ))}
           </div>
-          <div className="flex justify-between items-center">
-            <label className="my-4">
+
+          <div className="flex flex-col mb-4">
+            <label className="text-sm mb-2">
               Showing {startItem}-{endItem} of{" "}
               {getReviewCount(filters?.rating || null)} reviews
             </label>
-            <div>
+
+            <div className="flex flex-row gap-2 space-x-8">
               <select
-                className="p-2 mr-4 border rounded bg-gray-300"
-                defaultValue="onsale"
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setSortBy(e.target.value)
-                }
+                className="p-2 borde rounded bg-gray-300 w-fit"
+                defaultValue="newest to oldest"
+                onChange={(e) => setSortBy(e.target.value)}
               >
                 {["newest to oldest", "oldest to newest"].map((item) => (
                   <option className="bg-white" value={item} key={item}>
@@ -381,12 +635,9 @@ const Product = () => {
               </select>
 
               <select
-                className="p-2 border rounded bg-gray-300"
+                className="p-2 border rounded bg-gray-300 w-fit"
                 defaultValue={20}
-                // Set the number of items per page
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setItemsPerPage(Number(e.target.value))
-                }
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
               >
                 {[25, 20, 15, 5].map((item) => (
                   <option className="bg-white" value={item} key={item}>
@@ -396,54 +647,55 @@ const Product = () => {
               </select>
             </div>
           </div>
+
           <div>
             {reviews.map((review) => (
-              <div className="flex flex-col space-y-2 py-2 break-words">
-                <div className="space-x-2 pb-2">
-                  <label className="text-2xl font-semibold">
+              <div
+                key={review.id}
+                className="flex flex-col space-y-2 py-2 break-words"
+              >
+                <div className="flex flex-col pb-2">
+                  <span className="text-lg font-semibold">
                     {review.review_title}
-                  </label>
-                  <span>|</span>
-                  {/* TODO: Check if star = 1 change to star not stars */}
-                  <span>{review.rating_star} stars</span>
+                  </span>
+                  <span className="text-sm">{review.rating_star} stars</span>
                 </div>
-                <p>{review.review_details}</p>
-                <span className="text-sm">
+                <p className="text-sm">{review.review_details}</p>
+                <span className="text-xs">
                   {new Date(review.review_date).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
                   })}
                 </span>
-                <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
+                <div className="border-b border-gray-300 pb-2" />
               </div>
             ))}
+
             <div className="my-2">
               <PaginationCustom
                 itemsPerPage={itemsPerPage}
-                totalItems={getReviewCount(filters?.rating || null)} // Total items will be total records or total items
+                totalItems={getReviewCount(filters?.rating || null)}
                 currentPage={currentPage}
-                // Handle page change and set the current page
-                onPageChange={(page: number) => setCurrentPage(page)}
+                onPageChange={(page) => setCurrentPage(page)}
               />
             </div>
           </div>
         </div>
-        <div className="flex flex-row h-fit col-span-3 col-start-7 row-start-2 border border-gray-300 rounded-lg shadow-md">
-          {/* TODO: Add required validation for title and detail */}
+
+        {/* Add Review Form */}
+        <div className="flex flex-col border border-gray-300 rounded-lg shadow-md">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onFormSubmit)}
-              className="space-y-8 p-8 w-full"
+              className="space-y-6 p-4 w-full"
             >
+              <h3 className="text-lg font-semibold">Write a Review</h3>
+
               <FormField
                 control={form.control}
                 name="title"
-                render={({
-                  field,
-                }: {
-                  field: ControllerRenderProps<FormData, "title">;
-                }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Add a title</FormLabel>
                     <FormControl>
@@ -457,18 +709,13 @@ const Product = () => {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="detail"
-                render={({
-                  field,
-                }: {
-                  field: ControllerRenderProps<FormData, "detail">;
-                }) => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Details please! Your review helps other shoppers
-                    </FormLabel>
+                    <FormLabel>Details</FormLabel>
                     <FormControl>
                       <Textarea
                         className="border border-gray-300 shadow-md"
@@ -479,19 +726,16 @@ const Product = () => {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="rating"
-                render={({
-                  field,
-                }: {
-                  field: ControllerRenderProps<FormData, "rating">;
-                }) => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Select a rating star</FormLabel>
+                    <FormLabel>Rating</FormLabel>
                     <FormControl>
                       <select
-                        className="h-10 border border-gray-300 shadow-md"
+                        className="w-full h-10 border border-gray-300 shadow-md"
                         {...field}
                       >
                         <option value={1}>1 Star</option>
@@ -505,7 +749,10 @@ const Product = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit">Submit</Button>
+
+              <Button type="submit" className="w-full">
+                Submit Review
+              </Button>
             </form>
           </Form>
         </div>

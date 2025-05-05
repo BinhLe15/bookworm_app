@@ -14,7 +14,7 @@ import QuantityInput from "../components/QuantityInput";
 import { CartItem } from "../types";
 import { placeOrder } from "../services/api";
 import { AxiosError } from "axios";
-import { SignInPopUp } from "./SignIn";
+import { SignInPopUp } from "../components/SignIn";
 import { XIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -169,59 +169,186 @@ const Cart = () => {
 
   return (
     <div className="container mx-auto p-12">
-      <h2 className="text-2xl font-medium my-4">
-        Your cart: {cartCount} items
-      </h2>
-      <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
-      <div className="display grid grid-cols-9 gap-8 mt-6">
-        <div className="col-span-6 border border-gray-300 rounded-lg shadow-md py-8 h-full">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-8">Product</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead className="w-32">Quantity</TableHead>
-                <TableHead className="pl-10">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cartItems?.map((item) => (
+      {/* Desktop view */}
+      <div className="hidden md:flex flex-col">
+        <h2 className="text-2xl font-medium my-4">
+          Your cart: {cartCount} items
+        </h2>
+        <div className="border-btext-2xl font-bold border-b border-gray-300 pb-2" />
+        <div className="display grid grid-cols-9 gap-8 mt-6">
+          <div className="col-span-6 border border-gray-300 rounded-lg shadow-md py-8 h-full">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell className="pl-8 flex flex-row items-center whitespace-break-spaces">
-                    <a
-                      href={`/product/${item.book_id}`}
-                      target="_blank"
-                      className="flex flex-row items-center"
-                    >
-                      <img
-                        src={item?.book_cover_photo || defaultImage}
-                        alt="default"
-                        onError={(e) => {
-                          e.currentTarget.src = defaultImage;
-                        }}
-                        className="w-32 h-32"
-                      />
-                      <div className="flex flex-col ml-4 w-fit">
-                        <span className="text-2xl font-semibold overflow-x-auto">
-                          {item?.book_title || "Book Title"}
-                        </span>
-                        <span className="mt-2">
-                          {item?.book_author || "Book Author"}
-                        </span>
-                      </div>
-                    </a>
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-2xl font-semibold">
-                      ${item?.final_price}
-                    </p>
-                    {item?.base_price && (
-                      <p className="text-lg text-gray-500 line-through">
-                        ${item?.base_price}
+                  <TableHead className="pl-8">Product</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead className="w-32">Quantity</TableHead>
+                  <TableHead className="pl-10">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cartItems?.map((item) => (
+                  <TableRow>
+                    <TableCell className="pl-8 flex flex-row items-center whitespace-break-spaces">
+                      <a
+                        href={`/product/${item.book_id}`}
+                        target="_blank"
+                        className="flex flex-row items-center"
+                      >
+                        <img
+                          src={item?.book_cover_photo || defaultImage}
+                          alt="default"
+                          onError={(e) => {
+                            e.currentTarget.src = defaultImage;
+                          }}
+                          className="w-32 h-32"
+                        />
+                        <div className="flex flex-col ml-4 w-fit">
+                          <span className="text-2xl font-semibold overflow-x-auto">
+                            {item?.book_title || "Book Title"}
+                          </span>
+                          <span className="mt-2">
+                            {item?.book_author || "Book Author"}
+                          </span>
+                        </div>
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      <p className="text-2xl font-semibold">
+                        ${item?.final_price}
                       </p>
-                    )}
-                  </TableCell>
-                  <TableCell>
+                      {item?.base_price && (
+                        <p className="text-lg text-gray-500 line-through">
+                          ${item?.base_price}
+                        </p>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <QuantityInput
+                        value={item?.quantity}
+                        onChange={(value) => {
+                          updateQuantity(item.book_id, value);
+                        }}
+                        min={0}
+                        max={8}
+                        inputClassName="w-12"
+                      />
+                    </TableCell>
+                    <TableCell className="w-32 pl-10">
+                      <span className="text-2xl font-semibold">
+                        ${calculateItemTotal(item)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        className="!rounded-none !border-none w-fit"
+                        onClick={() => {
+                          const updatedCart = cartItems.filter(
+                            (cartItem) => cartItem.book_id !== item.book_id
+                          );
+                          setCartItems(updatedCart);
+                          localStorage.setItem(
+                            "cart",
+                            JSON.stringify(updatedCart)
+                          );
+                        }}
+                      >
+                        <XIcon />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="col-span-3 border border-gray-300 rounded-lg shadow-md h-fit">
+            <div className="flex flex-col justify-center items-center px-8 py-6">
+              <label className="font-semibold">Cart Totals</label>
+            </div>
+            <div className="border-btext-2xl font-bold border-b border-gray-300" />
+            <div className="flex flex-col justify-center items-center px-8 py-10 space-y-8">
+              <label className="text-2xl font-bold">
+                ${cartTotal.toFixed(2)}
+              </label>
+              <Button
+                className="w-full !rounded-none bg-gray-800"
+                onClick={() => {
+                  handlePlaceOrder();
+                }}
+              >
+                Place order
+              </Button>
+              <SignInPopUp
+                className="hidden"
+                isOpen={isDialogOpen}
+                setIsOpen={setIsDialogOpen}
+                navigatePlace="/cart"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile view */}
+      <div className="md:hidden mt-6">
+        <h2 className="text-2xl font-medium my-4">
+          Your cart: {cartCount} items
+        </h2>
+        <div className="border-b border-gray-300 pb-2 mb-4" />
+
+        <div className="space-y-6">
+          {cartItems?.map((item) => (
+            <div
+              key={item.book_id}
+              className="border border-gray-300 rounded-lg p-4 relative"
+            >
+              <Button
+                variant="outline"
+                className="absolute top-2 right-2 !rounded-none !border-none"
+                onClick={() => {
+                  const updatedCart = cartItems.filter(
+                    (cartItem) => cartItem.book_id !== item.book_id
+                  );
+                  setCartItems(updatedCart);
+                  localStorage.setItem("cart", JSON.stringify(updatedCart));
+                }}
+              >
+                <XIcon size={18} />
+              </Button>
+
+              <div className="flex gap-4">
+                <a href={`/product/${item.book_id}`} className="w-24">
+                  <img
+                    src={item?.book_cover_photo || defaultImage}
+                    alt="default"
+                    onError={(e) => {
+                      e.currentTarget.src = defaultImage;
+                    }}
+                    className="w-24 h-auto"
+                  />
+                </a>
+
+                <div className="flex-1">
+                  <a href={`/product/${item.book_id}`} className="block">
+                    <h3 className="text-lg font-semibold line-clamp-2">
+                      {item?.book_title || "Book Title"}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {item?.book_author || "Book Author"}
+                    </p>
+                  </a>
+
+                  <div className="flex justify-between items-center mt-3">
+                    <div>
+                      <p className="font-semibold">${item?.final_price}</p>
+                      {item?.base_price && (
+                        <p className="text-sm text-gray-500 line-through">
+                          ${item?.base_price}
+                        </p>
+                      )}
+                    </div>
+
                     <QuantityInput
                       value={item?.quantity}
                       onChange={(value) => {
@@ -229,61 +356,42 @@ const Cart = () => {
                       }}
                       min={0}
                       max={8}
-                      inputClassName="w-12"
+                      inputClassName="w-10"
                     />
-                  </TableCell>
-                  <TableCell className="w-32 pl-10">
-                    <span className="text-2xl font-semibold">
-                      ${calculateItemTotal(item)}
+                  </div>
+
+                  <div className="mt-2 text-right">
+                    <span className="font-semibold">
+                      Total: ${calculateItemTotal(item)}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      className="!rounded-none !border-none w-fit"
-                      onClick={() => {
-                        const updatedCart = cartItems.filter(
-                          (cartItem) => cartItem.book_id !== item.book_id
-                        );
-                        setCartItems(updatedCart);
-                        localStorage.setItem(
-                          "cart",
-                          JSON.stringify(updatedCart)
-                        );
-                      }}
-                    >
-                      <XIcon />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="col-span-3 border border-gray-300 rounded-lg shadow-md h-fit">
-          <div className="flex flex-col justify-center items-center px-8 py-6">
+
+        <div className="border border-gray-300 rounded-lg shadow-md mt-6 p-4">
+          <div className="flex flex-col justify-center items-center py-2">
             <label className="font-semibold">Cart Totals</label>
-          </div>
-          <div className="border-btext-2xl font-bold border-b border-gray-300" />
-          <div className="flex flex-col justify-center items-center px-8 py-10 space-y-8">
-            <label className="text-2xl font-bold">
+            <label className="text-xl font-bold mt-2">
               ${cartTotal.toFixed(2)}
             </label>
-            <Button
-              className="w-full !rounded-none bg-gray-800"
-              onClick={() => {
-                handlePlaceOrder();
-              }}
-            >
-              Place order
-            </Button>
-            <SignInPopUp
-              className="hidden"
-              isOpen={isDialogOpen}
-              setIsOpen={setIsDialogOpen}
-              navigatePlace="/cart"
-            />
           </div>
+          <Button
+            className="w-full !rounded-none bg-gray-800 mt-4"
+            onClick={() => {
+              handlePlaceOrder();
+            }}
+          >
+            Place order
+          </Button>
+          <SignInPopUp
+            className="hidden"
+            isOpen={isDialogOpen}
+            setIsOpen={setIsDialogOpen}
+            navigatePlace="/cart"
+          />
         </div>
       </div>
     </div>

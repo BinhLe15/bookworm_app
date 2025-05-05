@@ -39,7 +39,7 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
   };
 
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`${className}`}>
       <div className="flex items-center justify-between border rounded-lg bg-gray-300 border-gray-300 shadow-sm">
         <Button
           type="button"

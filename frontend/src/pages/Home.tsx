@@ -72,8 +72,9 @@ const Home = () => {
   }, [sortBy]);
 
   return (
-    <div className="container mx-auto -p-4">
-      <div className="p-7">
+    <div className="container mx-auto p-4">
+      {/* Desktop view */}
+      <div className="hidden md:flex flex-col p-7">
         <div className="flex justify-between">
           <h2 className="text-2xl font-semibold mb-4">On Sale</h2>
           <Button className="bg-gray-800">
@@ -164,6 +165,90 @@ const Home = () => {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
+
+      {/* Mobile view */}
+      <div className="md:hidden flex flex-col p-4">
+        {/* On Sale Section */}
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-semibold">On Sale</h2>
+          <Button size="sm" className="bg-gray-800">
+            <Link to="/shop" className="text-white text-sm">
+              View All
+            </Link>
+          </Button>
+        </div>
+
+        <div className="border rounded-lg border-gray-300 shadow-sm p-2 mb-6">
+          <Carousel className="w-full">
+            <CarouselContent>
+              {books.map((book) => (
+                <CarouselItem key={book.id} className="basis-full">
+                  <div className="p-1">
+                    <BookCard
+                      book={book}
+                      discounts={discounts}
+                      author_id={book.author_id}
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+
+        {/* Featured Books Section */}
+        <h2 className="text-xl font-medium mb-3 text-center">Featured Books</h2>
+        <Tabs
+          defaultValue="recommended"
+          onValueChange={(value) =>
+            setSortBy(value as "recommended" | "popular")
+          }
+        >
+          <div className="flex justify-center mb-4">
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger
+                className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
+                value="recommended"
+              >
+                Recommended
+              </TabsTrigger>
+              <TabsTrigger
+                className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
+                value="popular"
+              >
+                Popular
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="recommended">
+            <div className="grid grid-cols-1 gap-4 border rounded-lg border-gray-300 shadow-sm p-3">
+              {featuredBooks.map((book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  discounts={discounts}
+                  author_id={book.author_id}
+                />
+              ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="popular">
+            <div className="grid grid-cols-1 gap-4 border rounded-lg border-gray-300 shadow-sm p-3">
+              {featuredBooks.map((book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  discounts={discounts}
+                  author_id={book.author_id}
+                />
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
