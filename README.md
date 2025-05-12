@@ -24,7 +24,7 @@ Clone this project
 Navigate to bookwrom_app directory:
 
 ```bash
-  cd bookwomr_app
+  cd bookworm_app
 ```
 
 To deploy this project create .env file base on .env.example and run
