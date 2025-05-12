@@ -38,7 +38,7 @@ To deploy this project create .env file base on .env.example and run
 Navigate to the backend directory:
 
 ```bash
-  cd bookwomr_app/backend
+  cd bookworm_app/backend
 ```
 
 Install dependencies:
